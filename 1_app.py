@@ -179,10 +179,6 @@ def create_network(df_query):
     return G
 
 st.set_page_config(layout="wide")
-# st.markdown("""
-# <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-# """, unsafe_allow_html=True)
-
 st.markdown(
     """
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -192,10 +188,11 @@ st.markdown(
 
 def card(id_val, source, context, pdf_html, doc_meta):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
+    #<h5 class="card-title"><a href="http://localhost:8602/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
-            <h5 class="card-title">{source}</h5>
+            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
             <h6 class="card-subtitle mb-2 text-muted">{doc_meta}</h6>
             <p class="card-text">{context}</p>
             <h6 class="card-subtitle mb-2 text-muted">{id_val}</h6>
@@ -204,25 +201,23 @@ def card(id_val, source, context, pdf_html, doc_meta):
     </div>
     """, unsafe_allow_html=True)
 
+# @st.cache(suppress_st_warning=True)
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-def draw_network(res_df):
-    G = create_network(res_df)
-    G.show('nx.html')
-    HtmlFile = open('nx.html','r',encoding='utf-8')
-    components.html(HtmlFile.read(), height = 600, width = 600)
+def draw_network(HtmlFile):
+    components.html(HtmlFile.read(), height = 600)
 
-
-c01, c02, c03= st.columns((2, 6, 2))
-c01.markdown('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
-with c02:
+c11, c12 = st.columns((14, 6))
+with c11:
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
     st.write("""# RIA Live Demo""")
-
-c11, c12, c13 = st.columns((2, 6, 2))
-
-with c12:
     sentence_query = st.text_input('ค้นหาภาษาไทย', key = "sentence_query", placeholder = "พ.ร.บ. ธุรกิจสถาบันการเงิน")
-
+    query_params = st.experimental_get_query_params()
+    try:
+        # http://localhost:8501/?doc_meta=0002|0030|0028
+        query_option = query_params['doc_meta'][0]
+        st.markdown(query_option)
+    except:
+        pass
 if sentence_query: # or query != '' :
     # Init State Sessioin
     if 'page' not in st.session_state:
@@ -235,8 +230,8 @@ if sentence_query: # or query != '' :
         res_df['page'] = res_df['page'] / 10
         res_df['page'] = res_df['page'].astype(int)
         res_df['page'] = res_df['page'] + 1
-        # st.dataframe(res_df)
         if len(res_df) > 0:
+            st.session_state['max_page'] = res_df['page'].max()
             filter_res_df = res_df[res_df['page'] == st.session_state['page']]
             for i in range(len(filter_res_df)):
                 score = round(filter_res_df['score'].values[i] * 100, 2)
@@ -252,39 +247,17 @@ if sentence_query: # or query != '' :
                     pdf_html,
                     doc_name,
                 )
-                # query_sentence, result_sentence_list, index_match_query, index_match_score = click_query(doc_meta)
-                # print("Query Result: ")
-                # print(query_sentence)
-                # print('\n')
-                # print("จำนวนผล : ",len(result_sentence_list))
-                # print('\n')
-                # for index , result_sentence in enumerate(result_sentence_list):
-                    # print("Result_Number: ",index)
-                    # doc_id, page_id, sentence_id, doc_name = get_document_info(index_match_query[index])
-                    # print("Doc_id: ",doc_id)
-                    # print("ชื่อเอกสาร: ",doc_name)
-                    # print("หน้าที่:",int(page_id))
-                    # print(result_sentence)
-                    # print("Score: ",index_match_score[index])
-                    # print('\n')
-                    # html_result_sentence = conv.convert(result_sentence)
-                    # st.markdown(html_result_sentence, unsafe_allow_html=True)
-            st.session_state['max_page'] = res_df['page'].max()
-
     with c22:
-        draw_network(res_df)
-
-
-
+        with st.spinner("Loading..."):
+            G = create_network(res_df)
+            G.show('nx.html')
+            HtmlFile = open('nx.html','r',encoding='utf-8')
+            draw_network(HtmlFile)
     if 'max_page' not in st.session_state:
         st.session_state['max_page'] = 10
-    c41, c42 = st.columns((6, 6))
+    c41, c42 = st.columns((14, 6))
     with c41:
         st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
         if int(st.session_state['max_page']) > 1:
             page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
             st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
-
-
-        
-

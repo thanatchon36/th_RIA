@@ -1,0 +1,3 @@
+streamlit run 1_app.py --server.baseUrlPath="th_ria" --server.port 8601
+streamlit run 2_app.py --server.baseUrlPath="th_ria_explorer" --server.port 8602
+
