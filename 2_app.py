@@ -262,6 +262,7 @@ with c21:
             sentence_id = filter_res_df['sentence_id'].values[index]
             doc_name = filter_res_df['doc_name'].values[index]
             result_sentence = filter_res_df['result_sentence'].values[index]
+            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
             card("", 
                 doc_id,
                 '{}'.format(conv.convert(result_sentence)),
@@ -275,6 +276,7 @@ with c22:
             sentence_id = filter_res_df['sentence_id'].values[index]
             doc_name = filter_res_df['doc_name'].values[index]
             result_sentence = filter_res_df['result_sentence'].values[index]
+            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
             card("", 
                 doc_id,
                 '{}'.format(conv.convert(result_sentence)),
