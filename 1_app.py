@@ -240,7 +240,7 @@ if sentence_query: # or query != '' :
                     content = content.replace(each_j, f"<mark>{each_j}</mark>")
                 doc_meta = "{}".format(filter_res_df['code_id'].values[i])
                 doc_id, page_id, sentence_id, doc_name = get_document_info(doc_meta)
-                pdf_html = """<a href="http://pc140032646.bot.or.th/pdf/1/2/3/4" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>"""
+                pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(doc_meta.split('|')[0] + '.pdf')
                 card('Relevance: {}'.format(score), 
                     doc_meta,
                     '...{}...'.format(content),

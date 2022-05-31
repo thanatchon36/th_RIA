@@ -219,7 +219,7 @@ with c11:
     query_sentence, result_sentence_list, index_match_query, index_match_score = click_query(query_id)
     result_sentence_list = result_sentence_list[:10]
     doc_id, page_id, sentence_id, doc_name = get_document_info(query_id)
-    pdf_html = """<a href="http://pc140032646.bot.or.th/pdf/1/2/3/4" class="card-link">PDF</a>"""
+    pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
     card("", 
         doc_id,
         '{}'.format(conv.convert(query_sentence)),
