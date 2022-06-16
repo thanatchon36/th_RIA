@@ -181,7 +181,7 @@ def create_network(df_query):
                 G.add_edge(doc_A, doc_B, value=weight)
     return G
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title = 'RIA Explorer', page_icon = 'fav.png')
 st.markdown(
     """
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
