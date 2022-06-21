@@ -20,6 +20,9 @@ conv = Ansi2HTMLConverter()
 import networkx as nx
 import matplotlib.pyplot as plt
 from pyvis.network import Network
+def reset(df):
+    cols = df.columns
+    return df.reset_index()[cols]
 
 def norm_token(token):
     token = token.lower()
@@ -230,6 +233,17 @@ if sentence_query: # or query != '' :
         res_df['page'] = res_df['page'] / 10
         res_df['page'] = res_df['page'].astype(int)
         res_df['page'] = res_df['page'] + 1
+
+        doc_df = res_df.copy()
+        doc_df = doc_df[['code_id']].drop_duplicates()
+        doc_df['doc_meta'] = doc_df['code_id'].apply(get_document_info)
+        doc_df['doc_id'] = doc_df['doc_meta'].apply(lambda x: x[0])
+        doc_df['doc_name'] = doc_df['doc_meta'].apply(lambda x: x[3])
+        cols = ['doc_id', 'doc_name']
+        doc_df = doc_df[cols].drop_duplicates()
+        doc_df['sort_id'] = doc_df['doc_id'].astype(int)
+        doc_df = reset(doc_df.sort_values(by = 'sort_id'))
+
         if len(res_df) > 0:
             st.session_state['max_page'] = res_df['page'].max()
             filter_res_df = res_df[res_df['page'] == st.session_state['page']]
@@ -253,6 +267,11 @@ if sentence_query: # or query != '' :
             G.show('nx.html')
             HtmlFile = open('nx.html','r',encoding='utf-8')
             draw_network(HtmlFile)
+        markdown_text = "### List of Documents"
+        for index, row in doc_df.iterrows():
+            markdown_text = markdown_text + """\n{}. [{}: {}](http://pc140032646.bot.or.th/th_pdf/{}.pdf)\n""".format(index + 1, row['doc_id'], row['doc_name'], row['doc_id'])
+        st.markdown(markdown_text)
+
     if 'max_page' not in st.session_state:
         st.session_state['max_page'] = 10
     c41, c42 = st.columns((14, 6))
