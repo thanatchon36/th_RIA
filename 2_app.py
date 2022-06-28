@@ -120,7 +120,7 @@ def show_result(query_code_id,mapping_result_id):
         symbol = symbol_and_word[:2]
         word = symbol_and_word[2:]
         if symbol == '+ ' and len_first!= 0:
-            new_str1 = new_str1 + f"{Fore.RED}{word}"
+            new_str1 = new_str1 + f"{Fore.RED}{word}{Fore.BLACK}"
         elif symbol == '- ' and len_first!= 0:
             new_str2 = new_str2 + f"{Fore.BLUE}{word}"
         elif symbol == '? ':
