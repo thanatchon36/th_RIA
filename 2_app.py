@@ -157,7 +157,7 @@ def create_network(df_query):
         code_id_split = code_id_pair.split(' ~ ')
         doc_id_A = code_id_split[0].split('|')[0]
         doc_id_B = code_id_split[1].split('|')[0]
-        if doc_id_query != None and doc_id_A in doc_id_query and doc_id_B in doc_id_query:
+        if doc_id_query != None and (doc_id_A in doc_id_query or doc_id_B in doc_id_query)
             doc_id_A_list.append(doc_id_A)
             doc_id_B_list.append(doc_id_B)
             set_of_pair_list.append({doc_id_A,doc_id_B})
