@@ -122,7 +122,7 @@ def show_result(query_code_id,mapping_result_id):
         if symbol == '+ ' and len_first!= 0:
             new_str1 = new_str1 + f"{Fore.RED}{word}{Fore.BLACK}"
         elif symbol == '- ' and len_first!= 0:
-            new_str2 = new_str2 + f"{Fore.BLUE}{word}"
+            new_str2 = new_str2 + f"{Fore.BLACK}{word}"
         elif symbol == '? ':
             print('None')
         elif symbol != '+ ' and symbol != '- ' and symbol != '? ':
