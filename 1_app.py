@@ -75,14 +75,18 @@ with open(f'{path}/tfidf_vectorizer.sav', 'rb') as file:
 with open(f'{path}/tfidf_term_document_matrix.sav', 'rb') as file:
     tfidf_term_document_matrix = pickle.load(file)
 code_doc_mapping = pd.read_csv(f'{path}/code_doc_mapping.csv',dtype=str)
+code_mapping = code_doc_mapping.copy()
 data_max_pair = pd.read_csv(f'{path}/data_max_pair4.csv')
 code_doc_mapping_dict = dict(zip(code_doc_mapping.doc_id, code_doc_mapping.name))
 with open(f'{path}/dict_query.pickle', 'rb') as file:
     dict_query = pickle.load(file)
+with open(f'{path}/dict_pair.pickle', 'rb') as file:
+    dict_pair = pickle.load(file)
+with open(f'{path}/dict_query_list.pickle', 'rb') as file:
+    dict_query_list = pickle.load(file)
 
 #ใช้แค่ TF เพียงอย่างเดียว
 def search(word_query,search_type,tfidf_term_document_matrix):
-    
     def exact_word_search(word_query):
         doc_id_list = []
         page_id_list = []
@@ -185,7 +189,7 @@ def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
-            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
+            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
             <p class="card-text">{context}</p>
@@ -212,11 +216,25 @@ def card_3(source, context, pdf_html, doc_meta, doc_meta_2, doc_meta_3):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
-            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
+            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria/?doc_meta={source.split(' ')[0]}" class="card-link">{source}</a></h5>
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
             <h6>{doc_meta_3}</h6>
             <p class="card-text">{context}</p>
+            {pdf_html}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def card_4(id_val, source, context, pdf_html, doc_meta):
+    #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
+    st.markdown(f"""
+    <div class="card" style="margin:1rem;">
+        <div class="card-body">
+            <h5 class="card-title">{source}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">{doc_meta}</h6>
+            <p class="card-text">{context}</p>
+            <h6 class="card-subtitle mb-2 text-muted">{id_val}</h6>
             {pdf_html}
         </div>
     </div>
@@ -239,18 +257,57 @@ def step2_user_click_doc(doc_id_query):
     df_pair_result['doc_name'] = df_pair_result['doc_id'].apply(lambda x: code_doc_mapping_dict[x])
     return df_pair_result
 
+#3_app
+def click_query(query_code_id):
+    index_query = dict_pair['query'].index(query_code_id)
+    index_match_query = dict_pair['result'][index_query]
+    index_match_score = dict_pair['Score'][index_query]
+    result_sentence_list = []
+    for result_from_query in index_match_query:
+        query_sentence, result_sentence = show_result(query_code_id,result_from_query)
+        result_sentence_list.append(result_sentence)
+    return query_sentence, result_sentence_list, index_match_query, index_match_score
+def show_result(query_code_id,mapping_result_id):
+    query_sentence = dict_query_list[query_code_id]
+    compare_sentence = dict_query_list[mapping_result_id]
+    compare_sentence_result_list = list(dif.Differ().compare(query_sentence,compare_sentence))
+    new_str1 = ''
+    new_str2 = ''
+    len_first = 0 #เช็กว่าเป็นคำแรกของประโยคไหม ถ้าเป็นก็จะตัดออก เพื่อปรับให้ประโยคตรงกัน
+    for symbol_and_word in compare_sentence_result_list:
+        symbol = symbol_and_word[:2]
+        word = symbol_and_word[2:]
+        if symbol == '+ ' and len_first!= 0:
+            new_str1 = new_str1 + f"{Fore.RED}{word}{Fore.BLACK}"
+        elif symbol == '- ' and len_first!= 0:
+            new_str2 = new_str2 + f"{Fore.BLACK}{word}"
+        elif symbol == '? ':
+            print('None')
+        elif symbol != '+ ' and symbol != '- ' and symbol != '? ':
+            len_first += 1
+            new_str1 = new_str1 + f"{Fore.BLACK}{word}"
+            new_str2 = new_str2 + f"{Fore.BLACK}{word}"
+    return new_str2.replace('BLANK',' '),new_str1.replace('BLANK',' ')
+def get_document_info(query_code_id):
+    query_code_id_split = query_code_id.split("|")
+    doc_id = query_code_id_split[0]
+    page_id = query_code_id_split[1]
+    sentence_id = query_code_id_split[2]
+    doc_name = code_mapping[code_mapping['doc_id'] == doc_id].iloc[0]['name']
+    return doc_id, page_id, sentence_id, doc_name
+
 # @st.cache(suppress_st_warning=True)
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def draw_network(HtmlFile):
     components.html(HtmlFile.read(), height = 540)
 
 get_params = st.experimental_get_query_params()
-st.markdown(get_params)
+# st.markdown(get_params)
 if get_params == {}:
-    c11, c12 = st.columns((14, 6))
+    st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
+    st.write("""# RIA Live Demo""")
+    c11, c12, c13 = st.columns((14, 3, 3))
     with c11:
-        st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
-        st.write("""# RIA Live Demo""")
         sentence_query = st.text_input('ค้นหาภาษาไทย', key = "sentence_query", placeholder = "พ.ร.บ. ธุรกิจสถาบันการเงิน")
         query_params = st.experimental_get_query_params()
         try:
@@ -259,16 +316,33 @@ if get_params == {}:
             st.markdown(query_option)
         except:
             pass
+    with c12:
+        search_type = st.radio(
+            "Find pages with:",
+            ('This exact word or phrase', 'Any of these words'), key = "search_type")
+    with c13:
+        show_result_type = st.radio(
+            "Show Result:",
+            ('All', 'Distinct'), key = "show_result_type")
+
     if sentence_query: # or query != '' :
         # Init State Sessioin
         if 'page' not in st.session_state:
             st.session_state['page'] = 1
         c21, c22 = st.columns((14, 6))
-        
+
         with c21:
-            search_type = 1
-            res_df = search(sentence_query,search_type,tfidf_term_document_matrix)
-            
+            if search_type == 'This exact word or phrase':
+                search_type_val = 1
+            else:
+                search_type_val = 2
+            res_df = search(sentence_query,search_type_val,tfidf_term_document_matrix)
+
+            # st.dataframe(res_df)
+            if show_result_type == 'Distinct':
+                res_df = res_df.groupby('show_doc_id').first().reset_index()
+                res_df = reset(res_df.sort_values(by = 'score', ascending = False))
+
             res_df['page'] = res_df.index
             res_df['page'] = res_df['page'] / 10
             res_df['page'] = res_df['page'].astype(int)
@@ -333,12 +407,13 @@ elif 'code_id' in get_params:
         '...{}...'.format(content),
         pdf_html,
     )
-    st.markdown("### ประโยคที่มีความเชื่อมโยงกับประกาศอื่นๆ", unsafe_allow_html=True)
-    df_pair_result = step2_user_click_doc(code_id)
-    # st.dataframe(df_pair_result)
 
+    df_pair_result = step2_user_click_doc(code_id)
     filter_res_df = df_pair_result.copy()
     if len(filter_res_df) > 0:
+        st.markdown("### ประโยคที่มีความเชื่อมโยงกับประกาศอื่นๆ", unsafe_allow_html=True)
+        
+        # st.dataframe(df_pair_result)
         for i in range(len(filter_res_df)):
             score = ""
             content = filter_res_df['sentence_detail'].values[i]
@@ -353,3 +428,85 @@ elif 'code_id' in get_params:
                 'Page ID: {}'.format(doc_meta.split('|')[1]),
                 'Sentence ID: {}'.format(doc_meta.split('|')[2]),
             )
+
+elif 'doc_meta' in get_params:
+    c01, c02 = st.columns((8, 2))
+    with c01:
+        st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
+        st.write("""# RIA Explorer""")
+
+    c11, c12 = st.columns((12, 2))
+    with c11:
+        query_params = get_params
+        try:
+            # http://localhost:8501/?doc_meta=0002|0030|0028
+            query_id = query_params['doc_meta'][0]
+        except:
+            pass
+        query_sentence, result_sentence_list, index_match_query, index_match_score = click_query(query_id)
+        result_sentence_list = result_sentence_list[:10]
+        doc_id, page_id, sentence_id, doc_name = get_document_info(query_id)
+        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
+        card_4("", 
+            doc_id,
+            '{}'.format(conv.convert(query_sentence)),
+            pdf_html,
+            doc_name,
+        )
+        res_df = {
+            'doc_id': [],
+            'page_id': [],
+            'sentence_id': [],
+            'doc_name': [],
+            'result_sentence': [],
+        }
+        for index , result_sentence in enumerate(result_sentence_list):
+            doc_id, page_id, sentence_id, doc_name = get_document_info(index_match_query[index])
+            res_df['doc_id'].append(doc_id)
+            res_df['page_id'].append(page_id)
+            res_df['sentence_id'].append(sentence_id)
+            res_df['doc_name'].append(doc_name)
+            res_df['result_sentence'].append(result_sentence)
+        res_df = pd.DataFrame(res_df)
+
+        doc_id_list = list(pd.unique(res_df['doc_id'].values))
+        st.markdown("#### Result No: {}".format(len(result_sentence_list)))
+
+    with c12:
+        filter_result = st.multiselect(
+        'Filter:',
+        doc_id_list,
+        doc_id_list,
+        key = 'filter_result',
+        )
+
+    filter_res_df = reset(res_df[res_df['doc_id'].isin(st.session_state['filter_result'])])
+    c21, c22 = st.columns((4, 4))
+    with c21:
+        for index in range(len(filter_res_df)):
+            if index in [0, 2, 4 , 6, 8, 10]:
+                doc_id = filter_res_df['doc_id'].values[index]
+                sentence_id = filter_res_df['sentence_id'].values[index]
+                doc_name = filter_res_df['doc_name'].values[index]
+                result_sentence = filter_res_df['result_sentence'].values[index]
+                pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
+                card_4("", 
+                    doc_id,
+                    '{}'.format(conv.convert(result_sentence)),
+                    pdf_html,
+                    doc_name,
+                )
+    with c22:
+        for index in range(len(filter_res_df)):
+            if index in [1, 3, 5, 7, 9, 11]:
+                doc_id = filter_res_df['doc_id'].values[index]
+                sentence_id = filter_res_df['sentence_id'].values[index]
+                doc_name = filter_res_df['doc_name'].values[index]
+                result_sentence = filter_res_df['result_sentence'].values[index]
+                pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(doc_id + '.pdf')
+                card_4("", 
+                    doc_id,
+                    '{}'.format(conv.convert(result_sentence)),
+                    pdf_html,
+                    doc_name,
+                )
