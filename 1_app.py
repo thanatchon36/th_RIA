@@ -364,8 +364,9 @@ if get_params == {}:
                     content = filter_res_df['doc_detail'].values[i]
                     doc_name = filter_res_df['doc_name'].values[i]
                     doc_meta = filter_res_df['doc_id'].values[i]
-                    for each_j in get_found_token(st.session_state['sentence_query'], content):
-                        content = content.replace(each_j, f"<mark>{each_j}</mark>")
+                    # for each_j in get_found_token(st.session_state['sentence_query'], content):
+                    #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
+                    content = content.replace(sentence_query, f"<mark>{sentence_query}</mark>")
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(doc_meta.split('|')[0] + '.pdf')
                     card('Relevance: {}'.format(score), 
                         doc_meta + ' (Click to See This Page)',
