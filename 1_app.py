@@ -7,7 +7,7 @@ import numpy as np
 import requests
 import base64
 import webbrowser
-import ast 
+import ast
 import difflib as dif
 import pickle
 from colorama import Fore, Style
@@ -20,6 +20,8 @@ conv = Ansi2HTMLConverter()
 import networkx as nx
 import matplotlib.pyplot as plt
 from pyvis.network import Network
+import os
+from datetime import datetime
 def reset(df):
     cols = df.columns
     return df.reset_index()[cols]
@@ -326,6 +328,14 @@ if get_params == {}:
             ('All', 'Distinct'), key = "show_result_type")
 
     if sentence_query: # or query != '' :
+        # Save logs
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        if os.path.exists(os.getcwd() + '/log.csv') == False:
+            pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', index = False)
+        else:
+            pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', mode='a', index=False, header=False)
+
         # Init State Sessioin
         if 'page' not in st.session_state:
             st.session_state['page'] = 1
