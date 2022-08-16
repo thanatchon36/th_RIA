@@ -329,9 +329,8 @@ if get_params == {}:
 
     if sentence_query: # or query != '' :
         # Save logs
-        now = datetime.now()
-        current_time = now.strftime("%H:%M:%S")
-        if os.path.exists(os.getcwd() + '/log.csv') == False:
+        current_time = str(datetime.now())[:19]
+        if path.exists("log.csv") == False:
             pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', index = False)
         else:
             pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', mode='a', index=False, header=False)
