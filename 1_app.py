@@ -195,7 +195,6 @@ def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
             <p class="card-text">{context}</p>
-            <h6 class="card-subtitle mb-2 text-muted">{id_val}</h6>
             {pdf_html}
         </div>
     </div>
@@ -302,6 +301,12 @@ def get_document_info(query_code_id):
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def draw_network(HtmlFile):
     components.html(HtmlFile.read(), height = 540)
+@st.cache
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    # return df.to_csv().encode('utf-8')
+    return df.to_csv(index = False).encode('utf-8-sig')
+
 
 get_params = st.experimental_get_query_params()
 # st.markdown(get_params)
@@ -310,7 +315,7 @@ if get_params == {}:
     st.write("""# RIA Live Demo""")
     c11, c12, c13 = st.columns((14, 3, 3))
     with c11:
-        sentence_query = st.text_input('ค้นหาภาษาไทย', key = "sentence_query", placeholder = "พ.ร.บ. ธุรกิจสถาบันการเงิน")
+        sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "กรรมการธนาคาร")
         query_params = st.experimental_get_query_params()
         try:
             # http://localhost:8501/?doc_meta=0002|0030|0028
@@ -325,7 +330,7 @@ if get_params == {}:
     with c13:
         show_result_type = st.radio(
             "Show Result:",
-            ('All', 'Distinct'), key = "show_result_type")
+            ('Distinct Documents', 'All'), key = "show_result_type")
 
     if sentence_query: # or query != '' :
         # Save logs
@@ -348,7 +353,7 @@ if get_params == {}:
             res_df = search(sentence_query,search_type_val,tfidf_term_document_matrix)
 
             # st.dataframe(res_df)
-            if show_result_type == 'Distinct':
+            if show_result_type == 'Distinct Documents':
                 res_df = res_df.groupby('show_doc_id').first().reset_index()
                 res_df = reset(res_df.sort_values(by = 'score', ascending = False))
 
@@ -375,15 +380,19 @@ if get_params == {}:
                     doc_meta = filter_res_df['doc_id'].values[i]
                     # for each_j in get_found_token(st.session_state['sentence_query'], content):
                     #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
-                    content = content.replace(sentence_query, f"<mark>{sentence_query}</mark>")
+                    content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(doc_meta.split('|')[0] + '.pdf')
                     card('Relevance: {}'.format(score), 
-                        doc_meta + ' (Click to See This Page)',
+                        'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
                         '...{}...'.format(content),
                         pdf_html,
                         'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
                         'Page ID: {}'.format(doc_meta.split('|')[1]),
                     )
+
+                cols = ['doc_id','doc_name','doc_detail','page']
+                csv = convert_df(res_df[cols])
+
         with c22:
             st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
             with st.spinner("Loading..."):
@@ -404,7 +413,14 @@ if get_params == {}:
             st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
             if int(st.session_state['max_page']) > 1:
                 page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
-                st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+            st.download_button(
+                label="Download search results as CSV",
+                data=csv,
+                file_name=f"{sentence_query}_results.csv",
+                mime='text/csv',
+            )
+            st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+
 elif 'code_id' in get_params:
     code_id = get_params['code_id'][0]
     doc_meta = code_id
