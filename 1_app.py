@@ -188,10 +188,11 @@ st.markdown(
 def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
     #<h5 class="card-title"><a href="http://localhost:8602/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
+    display_source = 'Doc' + source.replace('|','|Page')
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
-            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
+            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{display_source}</a></h5>
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
             <p class="card-text">{context}</p>
@@ -383,7 +384,7 @@ if get_params == {}:
                     content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(doc_meta.split('|')[0] + '.pdf')
                     card('Relevance: {}'.format(score), 
-                        'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
+                        doc_meta + ' (Click to See This Page)',
                         '...{}...'.format(content),
                         pdf_html,
                         'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
