@@ -315,7 +315,7 @@ if get_params == {}:
     st.write("""# RIA Live Demo""")
     c11, c12, c13 = st.columns((14, 3, 3))
     with c11:
-        sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "กรรมการธนาคาร")
+        sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "การจัดชั้นและการกันเงินสำรอง")
         query_params = st.experimental_get_query_params()
         try:
             # http://localhost:8501/?doc_meta=0002|0030|0028
