@@ -391,7 +391,7 @@ if get_params == {}:
                         'Page ID: {}'.format(doc_meta.split('|')[1]),
                     )
 
-                cols = ['doc_id','doc_name','doc_detail','page']
+                cols = ['doc_id','doc_name','doc_detail',]
                 csv = convert_df(res_df[cols])
 
         with c22:
