@@ -557,7 +557,7 @@ if get_params == {}:
                         )
                     else:
                         card("", 
-                            'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
+                            'Doc' + doc_meta.replace('|','|Page'),
                             '...{}...'.format(content),
                             pdf_html,
                             'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
