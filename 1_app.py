@@ -24,16 +24,31 @@ import pythainlp
 from pythainlp import sent_tokenize, word_tokenize
 import numpy as np
 import math
-import re 
+import re
 import itertools
 from pythainlp.corpus import thai_stopwords
 import statistics
 from statistics import mode, StatisticsError
 
+# File for Network
+df_dict_pair_0 = pd.read_csv('09_Output_Streamlib/df_dict_pair.csv')
+Data_Dictionary_streamlib_0 = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
+
+# File for Search
+Doc_Page_Text_1 = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
+category_text_1 = pd.read_csv('09_Output_Streamlib/category_text_score.csv')
+Data_Dictionary_streamlib_1 = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
+df_dict_pair_1 = pd.read_csv('09_Output_Streamlib/df_dict_pair.csv')
+
+# File For Compare
+df_dict_pair_2 = pd.read_csv('09_Output_Streamlib/df_dict_pair.csv')
+Data_Dictionary_streamlib_2 = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
+Doc_Page_Text_2 = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
+Doc_Page_Sentence_2 = pd.read_csv('09_Output_Streamlib/Doc_Page_Sentence.csv')
+
 def reset(df):
     cols = df.columns
     return df.reset_index()[cols]
-
 def norm_token(token):
     token = token.lower()
     return token
@@ -195,7 +210,7 @@ def create_category_score(category_text,query):
         all_query_token.remove('|')
         all_query_token.remove('{')
         all_query_token.remove('}')
-    except:
+    except ValueError:
         pass
     filter_col = list(filter(lambda col: col in query_list , category_text.columns[1:]))
     filter_col.append('cat')
@@ -205,7 +220,12 @@ def create_category_score(category_text,query):
     df_score = df_score.reset_index(drop=True)
     return df_score
 
-def step1_user_search(query,Doc_Page_Text,category_text):
+def filter_node_for_search(df_dict_pair,Result_search):
+    Result_search_unique = Result_search['Doc_Page_ID'].unique()
+    df_dict_pair_filter = df_dict_pair[df_dict_pair['Doc_Page_ID'].isin(Result_search_unique)]
+    return df_dict_pair_filter
+
+def step1_user_search(query,Doc_Page_Text,category_text,df_dict_pair,Data_Dictionary_streamlib):
     Doc_Page_Text['Score'] = Doc_Page_Text.apply(lambda x: retrieval_score(x['Original_text'], query), axis=1)
     Result_search = Doc_Page_Text.sort_values(by='Score', ascending=False)
     Result_search = Result_search[Result_search['Score'] > 0]
@@ -217,25 +237,33 @@ def step1_user_search(query,Doc_Page_Text,category_text):
     Result_search = Result_search.merge(category_score,on='Category_Code',how='left')
     Result_search = Result_search.sort_values(by=['Score','rank'],ascending=False)
     Result_search = Result_search.drop(columns=['File_Name','Cat_Score','rank'])
-    return Result_search
-
-def filter_node(df_dict_pair,Result_search_unique):
-    df_dict_pair_filter = df_dict_pair[df_dict_pair['Doc_Page_ID'].isin(Result_search_unique)]
-    return df_dict_pair_filter
-def create_network(df_dict_pair,Result_search):
     df_dict_pair[['Q_Doc_ID','Q_Page_ID','Q_Sen_ID']] = df_dict_pair['query'].str.split('|', expand=True)
     df_dict_pair[['R_Doc_ID','R_Page_ID','R_Sen_ID']] = df_dict_pair['result'].str.split('|', expand=True)
     df_dict_pair['Doc_Page_ID'] = df_dict_pair['Q_Doc_ID'] + '|' + df_dict_pair['Q_Page_ID'] 
+    df_dict_pair_filter_node = filter_node_for_search(df_dict_pair,Result_search).groupby('Doc_Page_ID')['result'].agg('count').reset_index().rename(columns={'result':'Number_result'})
+    Result_search = Result_search.merge(df_dict_pair_filter_node,on='Doc_Page_ID',how='left')
+    return Result_search
+
+def filter_node(df_dict_pair,Result_search):
     Result_search_unique = Result_search['Doc_Page_ID'].unique()
-    df_dict_pair_filter = filter_node(df_dict_pair,Result_search_unique)
+    df_dict_pair_filter = df_dict_pair[df_dict_pair['Doc_Page_ID'].isin(Result_search_unique)]
+    return df_dict_pair_filter
+
+#500 * 2800
+def create_network(df_dict_pair,Data_Dictionary_streamlib,Result_search):
+    df_dict_pair[['Q_Doc_ID','Q_Page_ID','Q_Sen_ID']] = df_dict_pair['query'].str.split('|', expand=True)
+    df_dict_pair[['R_Doc_ID','R_Page_ID','R_Sen_ID']] = df_dict_pair['result'].str.split('|', expand=True)
+    df_dict_pair['Doc_Page_ID'] = df_dict_pair['Q_Doc_ID'] + '|' + df_dict_pair['Q_Page_ID'] 
+    df_dict_pair_filter = filter_node(df_dict_pair,Result_search)
     all_pair_Doc_id = df_dict_pair_filter[['Q_Doc_ID','R_Doc_ID']].copy()
     all_pair_Doc_id['Count'] = 1
     all_pair_Doc_id_group = all_pair_Doc_id.groupby(['Q_Doc_ID','R_Doc_ID'])['Count'].agg('count').reset_index()
+    #print(all_pair_Doc_id_group)
     median_score = statistics.median(all_pair_Doc_id_group['Count'])
     all_node = list(all_pair_Doc_id_group['Q_Doc_ID'].unique())
     all_node.extend(all_pair_Doc_id_group['R_Doc_ID'].unique())
     all_node = list(set(all_node))
-    G = Network(bgcolor="#222222",font_color="white", height='500px', width='2800px')
+    G = Network(height='500px', width='100%',bgcolor="#222222",font_color="white")
     for Doc_ID in all_node:
         Doc_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
         Doc_ID_Name_len = len(Doc_Name)
@@ -270,49 +298,50 @@ def create_network(df_dict_pair,Result_search):
     except:
         pass
     G.set_options('''
-    var options = {
-    "nodes": {
-        "color": {
-        "border": "rgba(34, 42, 89,1)",
-        "background": "rgba(11, 81, 89,1)",
-        "highlight": {
-            "border": "rgba(242, 76, 39,1)",
-            "background": "rgba(242, 234, 194,1)"
-        },
-        "hover": {
-            "border": "rgba(242, 234, 194,1)",
-            "background": "rgba(242, 76, 39,1)"
-        }
-        }
-    },
-    "edges": {
-        "color": {
-        "hover": "rgba(217, 181, 4,1)",
-        "inherit": false
-        },
-        "font": {
-        "align": "middle"
-        },
-        "hoverWidth": 3.1,
-        "smooth": false
-    },
-    "interaction": {
-        "hover": true
-    },
-    "physics": {
-        "barnesHut": {
-        "gravitationalConstant": -59050,
-        "centralGravity": 1.5,
-        "springLength": 45,
-        "springConstant": 0.001
-        },
-        "minVelocity": 0.75
+var options = {
+  "nodes": {
+    "color": {
+      "border": "rgba(34, 42, 89,1)",
+      "background": "rgba(11, 81, 89,1)",
+      "highlight": {
+        "border": "rgba(242, 76, 39,1)",
+        "background": "rgba(242, 234, 194,1)"
+      },
+      "hover": {
+        "border": "rgba(242, 234, 194,1)",
+        "background": "rgba(242, 76, 39,1)"
+      }
     }
-    }
-    ''')
+  },
+  "edges": {
+    "color": {
+      "hover": "rgba(217, 181, 4,1)",
+      "inherit": false
+    },
+    "font": {
+      "align": "middle"
+    },
+    "hoverWidth": 3.1,
+    "smooth": false
+  },
+  "interaction": {
+    "hover": true
+  },
+  "physics": {
+    "barnesHut": {
+      "gravitationalConstant": -59050,
+      "centralGravity": 1.5,
+      "springLength": 45,
+      "springConstant": 0.001
+    },
+    "minVelocity": 0.75
+  }
+}
+''')
     return G
 
 def part_one_show_original_text(Doc_Page_Text,Data_Dictionary_streamlib,Doc_Page_ID):
+    Data_Dictionary_streamlib = Data_Dictionary_streamlib[['Doc_ID','เรื่อง']].copy()
     Doc_Page_Text[['Doc_ID','Page_ID']] = Doc_Page_Text['Doc_Page_ID'].str.split('|', expand=True)
     df_part_one = Doc_Page_Text[Doc_Page_Text['Doc_Page_ID'] == Doc_Page_ID].merge(Data_Dictionary_streamlib,on='Doc_ID',how='left')
     return df_part_one
@@ -338,6 +367,10 @@ def step3_2_click_show_result(query_sentence,compare_sentence):
     return [new_query_sentence.replace('BLANK',' '),new_compare_sentence.replace('BLANK',' ')]
 
 def part_two_show_compare(df_dict_pair,Doc_Page_Sentence,Data_Dictionary_streamlib,Doc_Page_ID):
+    Data_Dictionary_streamlib = Data_Dictionary_streamlib[['Doc_ID','เรื่อง']].copy()
+    df_dict_pair[['Q_Doc_ID','Q_Page_ID','Q_Sen_ID']] = df_dict_pair['query'].str.split('|', expand=True)
+    df_dict_pair[['R_Doc_ID','R_Page_ID','R_Sen_ID']] = df_dict_pair['result'].str.split('|', expand=True)
+    df_dict_pair['Doc_Page_ID'] = df_dict_pair['Q_Doc_ID'] +'|'+df_dict_pair['Q_Page_ID']
     df_dict_pair_filter = df_dict_pair[df_dict_pair['Doc_Page_ID'] == Doc_Page_ID].copy()
     df_dict_pair_filter = df_dict_pair_filter.merge(Doc_Page_Sentence,right_on = 'Doc_Page_Sen_ID',left_on='query',how='left').drop(columns='Doc_Page_Sen_ID').rename(columns={'Sentence':'query_Sentence'})
     df_dict_pair_filter = df_dict_pair_filter.merge(Doc_Page_Sentence,right_on = 'Doc_Page_Sen_ID',left_on='result',how='left').drop(columns='Doc_Page_Sen_ID').rename(columns={'Sentence':'result_Sentence'})
@@ -360,6 +393,19 @@ st.markdown(
     """, unsafe_allow_html=True)
 
 def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
+    st.markdown(f"""
+    <div class="card" style="margin:1rem;">
+        <div class="card-body">
+            <h5 class="card-title">{source}</h5>
+            <h6>{doc_meta}</h6>
+            <h6>{doc_meta_2}</h6>
+            <p class="card-text">{context}</p>
+            {pdf_html}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
     #<h5 class="card-title"><a href="http://localhost:8602/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
     st.markdown(f"""
@@ -424,20 +470,6 @@ def convert_df(df):
     # return df.to_csv().encode('utf-8')
     return df.to_csv(index = False).encode('utf-8-sig')
 
-Doc_Page_Text = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
-category_text = pd.read_csv('09_Output_Streamlib/category_text_score.csv')
-Data_Dictionary_streamlib = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
-df_dict_pair = pd.read_csv('09_Output_Streamlib/df_dict_pair.csv')
-
-Doc_Page_Sentence = pd.read_csv('09_Output_Streamlib/Doc_Page_Sentence.csv')
-
-Data_Dictionary_streamlib_2 = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
-Data_Dictionary_streamlib_2 = Data_Dictionary_streamlib_2[['Doc_ID','เรื่อง']].copy()
-df_dict_pair_2 = pd.read_csv('09_Output_Streamlib/df_dict_pair.csv')
-df_dict_pair_2[['Q_Doc_ID','Q_Page_ID','Q_Sen_ID']] = df_dict_pair_2['query'].str.split('|', expand=True)
-df_dict_pair_2[['R_Doc_ID','R_Page_ID','R_Sen_ID']] = df_dict_pair_2['result'].str.split('|', expand=True)
-df_dict_pair_2['Doc_Page_ID'] = df_dict_pair_2['Q_Doc_ID'] +'|'+df_dict_pair_2['Q_Page_ID']
-
 get_params = st.experimental_get_query_params()
 # st.markdown(get_params)
 if get_params == {}:
@@ -470,21 +502,23 @@ if get_params == {}:
         if 'page' not in st.session_state:
             st.session_state['page'] = 1
 
-        res_df = step1_user_search(sentence_query,Doc_Page_Text,category_text)
+        res_df = step1_user_search(sentence_query,Doc_Page_Text_1,category_text_1,df_dict_pair_1,Data_Dictionary_streamlib_1)
         Result_search = res_df.copy()
 
-        c01, c02, c03 = st.columns((1, 30, 1))
-        with c02:
-            try:
-                
-                with st.spinner("Loading..."):
-                    G = create_network(df_dict_pair,Result_search)
-                    G.show('nx.html')
-                    HtmlFile = open('nx.html','r',encoding='utf-8')
-                    draw_network(HtmlFile)
-                    st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
-            except StatisticsError:
-                pass
+        res_df['Number_result'] = res_df['Number_result'].fillna(-1)
+        # st.dataframe(res_df)
+        
+        # c01, c02, c03 = st.columns((1, 30, 1))
+        # with c02:
+        try:
+            with st.spinner("Loading..."):
+                G = create_network(df_dict_pair_0,Data_Dictionary_streamlib_0,Result_search)
+                G.show('nx.html')
+                HtmlFile = open('nx.html','r',encoding='utf-8')
+                draw_network(HtmlFile)
+                st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
+        except StatisticsError:
+            pass
 
         c21, c22 = st.columns((14, 6))
         with c21:    
@@ -504,7 +538,7 @@ if get_params == {}:
             
             if len(res_df) > 0:
                 st.session_state['max_page'] = res_df['page'].max()
-                filter_res_df = res_df[res_df['page'] == st.session_state['page']]
+                filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
                 for i in range(len(filter_res_df)):
                     content = filter_res_df['Original_text'].values[i]
                     doc_name = filter_res_df['เรื่อง'].values[i]
@@ -513,13 +547,22 @@ if get_params == {}:
                     #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
                     content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
-                    card("", 
-                        'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
-                        '...{}...'.format(content),
-                        pdf_html,
-                        'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
-                        'Page ID: {}'.format(doc_meta.split('|')[1]),
-                    )
+                    if filter_res_df['Number_result'].values[i] > 0:
+                        link_card("", 
+                            'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
+                            '...{}...'.format(content),
+                            pdf_html,
+                            'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
+                            'Page ID: {}'.format(doc_meta.split('|')[1]),
+                        )
+                    else:
+                        card("", 
+                            'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
+                            '...{}...'.format(content),
+                            pdf_html,
+                            'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
+                            'Page ID: {}'.format(doc_meta.split('|')[1]),
+                        )
                 # st.dataframe(res_df)
                 # st.dataframe(doc_df)
 
@@ -551,11 +594,11 @@ if get_params == {}:
 elif 'code_id' in get_params:
     code_id = get_params['code_id'][0]
     doc_meta = code_id.replace('Doc','').replace('Page','')
-    part_one_df = part_one_show_original_text(Doc_Page_Text,Data_Dictionary_streamlib_2,doc_meta)
+    part_one_df = part_one_show_original_text(Doc_Page_Text_2,Data_Dictionary_streamlib_2,doc_meta)
 
     doc_name = part_one_df['เรื่อง'].values[0]
     content = part_one_df['Original_text'].values[0]
-    file_name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == doc_meta.split('|')[0].replace('Doc','')]['File_Code'].values[0]
+    file_name = Data_Dictionary_streamlib_0[Data_Dictionary_streamlib_0['Doc_ID'] == doc_meta.split('|')[0].replace('Doc','')]['File_Code'].values[0]
 
     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(file_name)
     card_2(
@@ -565,7 +608,8 @@ elif 'code_id' in get_params:
         pdf_html,
     )
 
-    part_two_df = part_two_show_compare(df_dict_pair_2,Doc_Page_Sentence,Data_Dictionary_streamlib_2,doc_meta)
+    # part_two_df = part_two_show_compare(df_dict_pair_2,Doc_Page_Sentence,Data_Dictionary_streamlib_2,doc_meta)
+    part_two_df =part_two_show_compare(df_dict_pair_2,Doc_Page_Sentence_2,Data_Dictionary_streamlib_2,doc_meta)
 
     # st.dataframe(part_two_df)
 
@@ -575,7 +619,7 @@ elif 'code_id' in get_params:
             doc_id = 'Doc' + part_two_df['Q_Doc_ID'].values[index]
             page_id = "Page" + part_two_df['Q_Page_ID'].values[index] + ' Sentence'  + part_two_df['Q_Sen_ID'].values[index]
             result_sentence = part_two_df['query_Sentence_show'].values[index]
-            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == part_two_df['Q_Doc_ID'].values[index]]['File_Code'].values[0])
+            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(Data_Dictionary_streamlib_0[Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['Q_Doc_ID'].values[index]]['File_Code'].values[0])
             card_4( 
                 doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index],
                 '{}'.format(conv.convert(result_sentence)),
@@ -588,7 +632,7 @@ elif 'code_id' in get_params:
             doc_id = 'Doc' + part_two_df['R_Doc_ID'].values[index]
             page_id = "Page" + part_two_df['R_Page_ID'].values[index] + ' Sentence'  + part_two_df['R_Sen_ID'].values[index]
             result_sentence = part_two_df['result_Sentence_show'].values[index]
-            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
+            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(Data_Dictionary_streamlib_0[Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
             card_4( 
                 doc_id + ' ' + part_two_df['R_เรื่อง'].values[index],
                 '{}'.format(conv.convert(result_sentence)),
