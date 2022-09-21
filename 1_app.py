@@ -192,95 +192,92 @@ if get_params == {}:
             st.session_state['page'] = 1
 
         self.query = sentence_query
-        res_df = self.step1_user_search()
 
-        Result_search = res_df.copy()
-
-        res_df['Number_result'] = res_df['Number_result'].fillna(-1)
-        # st.dataframe(res_df)
-        
-        # c01, c02, c03 = st.columns((1, 30, 1))
-        # with c02:
         try:
-            with st.spinner("Loading..."):
-                G = self.create_network(Result_search)
-                G.show('nx.html')
-                HtmlFile = open('nx.html','r',encoding='utf-8')
-                draw_network(HtmlFile)
-                st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
-        except StatisticsError:
+            res_df = self.step1_user_search()
+            Result_search = res_df.copy()
+            res_df['Number_result'] = res_df['Number_result'].fillna(-1)
+
+            try:
+                with st.spinner("Loading..."):
+                    G = self.create_network(Result_search)
+                    G.show('nx.html')
+                    HtmlFile = open('nx.html','r',encoding='utf-8')
+                    draw_network(HtmlFile)
+                    st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
+            except StatisticsError:
+                pass
+
+            c21, c22 = st.columns((14, 6))
+            with c21:    
+                if show_result_type == 'Distinct Documents':
+                    res_df = res_df.groupby('Doc_ID').first().reset_index()
+                    res_df = reset(res_df.sort_values(by = 'Score', ascending = False))
+
+                res_df['page'] = res_df.index
+                res_df['page'] = res_df['page'] / 10
+                res_df['page'] = res_df['page'].astype(int)
+                res_df['page'] = res_df['page'] + 1
+
+                doc_df = res_df.copy()
+                doc_df = doc_df[['Doc_ID', 'เรื่อง','File_Code']].drop_duplicates()
+                doc_df['sort_id'] = doc_df['Doc_ID'].astype(int)
+                doc_df = reset(doc_df.sort_values(by = 'sort_id'))
+                
+                if len(res_df) > 0:
+                    st.session_state['max_page'] = res_df['page'].max()
+                    filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
+                    for i in range(len(filter_res_df)):
+                        content = filter_res_df['Original_text'].values[i]
+                        doc_name = filter_res_df['เรื่อง'].values[i]
+                        doc_meta = filter_res_df['Doc_Page_ID'].values[i]
+                        # for each_j in get_found_token(st.session_state['sentence_query'], content):
+                        #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
+                        content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
+                        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
+                        if filter_res_df['Number_result'].values[i] > 0:
+                            link_card("", 
+                                'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
+                                '...{}...'.format(content),
+                                pdf_html,
+                                'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
+                                'Page ID: {}'.format(doc_meta.split('|')[1]),
+                            )
+                        else:
+                            card("", 
+                                'Doc' + doc_meta.replace('|','|Page'),
+                                '...{}...'.format(content),
+                                pdf_html,
+                                'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
+                                'Page ID: {}'.format(doc_meta.split('|')[1]),
+                            )
+                    cols = ['Doc_Page_ID','เรื่อง','Original_text']
+                    csv = convert_df(res_df[cols])
+
+            with c22:
+                st.markdown("""Remark:\n- Scroll เพื่อซุมเข้าออก\n- Click เพื่อเลื่อน""")
+                markdown_text = "### List of Documents"
+                for index, row in doc_df.iterrows():
+                    markdown_text = markdown_text + """\n[{}: {}](http://pc140032646.bot.or.th/th_pdf/{})\n""".format(row['Doc_ID'], row['เรื่อง'], row['File_Code'])
+                st.markdown(markdown_text)
+
+            if 'max_page' not in st.session_state:
+                st.session_state['max_page'] = 10
+            c41, c42 = st.columns((14, 6))
+            with c41:
+                st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
+                if int(st.session_state['max_page']) > 1:
+                    page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
+                st.download_button(
+                    label="Download search results as CSV",
+                    data=csv,
+                    file_name=f"{sentence_query}_results.csv",
+                    mime='text/csv',
+                )
+                st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+        except:
+            st.markdown("## ไม่พบข้อความที่ค้นหา")
             pass
-
-        c21, c22 = st.columns((14, 6))
-        with c21:    
-            if show_result_type == 'Distinct Documents':
-                res_df = res_df.groupby('Doc_ID').first().reset_index()
-                res_df = reset(res_df.sort_values(by = 'Score', ascending = False))
-
-            res_df['page'] = res_df.index
-            res_df['page'] = res_df['page'] / 10
-            res_df['page'] = res_df['page'].astype(int)
-            res_df['page'] = res_df['page'] + 1
-
-            doc_df = res_df.copy()
-            doc_df = doc_df[['Doc_ID', 'เรื่อง','File_Code']].drop_duplicates()
-            doc_df['sort_id'] = doc_df['Doc_ID'].astype(int)
-            doc_df = reset(doc_df.sort_values(by = 'sort_id'))
-            
-            if len(res_df) > 0:
-                st.session_state['max_page'] = res_df['page'].max()
-                filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
-                for i in range(len(filter_res_df)):
-                    content = filter_res_df['Original_text'].values[i]
-                    doc_name = filter_res_df['เรื่อง'].values[i]
-                    doc_meta = filter_res_df['Doc_Page_ID'].values[i]
-                    # for each_j in get_found_token(st.session_state['sentence_query'], content):
-                    #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
-                    content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
-                    pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
-                    if filter_res_df['Number_result'].values[i] > 0:
-                        link_card("", 
-                            'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
-                            '...{}...'.format(content),
-                            pdf_html,
-                            'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
-                            'Page ID: {}'.format(doc_meta.split('|')[1]),
-                        )
-                    else:
-                        card("", 
-                            'Doc' + doc_meta.replace('|','|Page'),
-                            '...{}...'.format(content),
-                            pdf_html,
-                            'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
-                            'Page ID: {}'.format(doc_meta.split('|')[1]),
-                        )
-                # st.dataframe(res_df)
-                # st.dataframe(doc_df)
-
-                cols = ['Doc_Page_ID','เรื่อง','Original_text']
-                csv = convert_df(res_df[cols])
-
-        with c22:
-            st.markdown("""Remark:\n- Scroll เพื่อซุมเข้าออก\n- Click เพื่อเลื่อน""")
-            markdown_text = "### List of Documents"
-            for index, row in doc_df.iterrows():
-                markdown_text = markdown_text + """\n[{}: {}](http://pc140032646.bot.or.th/th_pdf/{})\n""".format(row['Doc_ID'], row['เรื่อง'], row['File_Code'])
-            st.markdown(markdown_text)
-
-        if 'max_page' not in st.session_state:
-            st.session_state['max_page'] = 10
-        c41, c42 = st.columns((14, 6))
-        with c41:
-            st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
-            if int(st.session_state['max_page']) > 1:
-                page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
-            st.download_button(
-                label="Download search results as CSV",
-                data=csv,
-                file_name=f"{sentence_query}_results.csv",
-                mime='text/csv',
-            )
-            st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
 
 elif 'code_id' in get_params:
     code_id = get_params['code_id'][0]
