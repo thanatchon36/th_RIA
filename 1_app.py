@@ -251,8 +251,8 @@ if get_params == {}:
 
                         # for each_j in get_found_token(st.session_state['sentence_query'], content):
                         #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
-                        # content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
-                        content = highlight_text(sentence_query, content)
+                        content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
+                        # content = highlight_text(sentence_query, content)
 
                         pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                         if filter_res_df['Number_result'].values[i] > 0:
