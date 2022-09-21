@@ -73,6 +73,23 @@ def canonicalize(string):
                 pass
     return normalized_tokens
 
+def highlight_text(query_sentence,text):
+    query_token_list = word_tokenize(query_sentence)
+    new_query_token_list = []
+    new_token = ''
+    for index, token in enumerate(query_token_list):
+        if token in thai_stopwords():
+            new_token += token
+        else:
+            new_token += token
+            new_query_token_list.append(new_token)
+            new_query_token_list.append(token)
+            new_token = ''
+    token_list_to_replace = list(dict.fromkeys(new_query_token_list))
+    for new_token in token_list_to_replace:
+        text = text.replace(new_token,f'<mark style="background-color:yellow;">{new_token}</mark>')
+    return text
+
 st.set_page_config(layout="wide", page_title = 'RIA', page_icon = 'fav.png')
 st.markdown(
     """
@@ -231,9 +248,12 @@ if get_params == {}:
                         content = filter_res_df['Original_text'].values[i]
                         doc_name = filter_res_df['เรื่อง'].values[i]
                         doc_meta = filter_res_df['Doc_Page_ID'].values[i]
+
                         # for each_j in get_found_token(st.session_state['sentence_query'], content):
                         #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
-                        content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
+                        # content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
+                        content = highlight_text(sentence_query, content)
+
                         pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                         if filter_res_df['Number_result'].values[i] > 0:
                             link_card("", 
