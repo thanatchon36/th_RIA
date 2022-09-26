@@ -78,12 +78,17 @@ def highlight_text(query_sentence,text):
         query_sentence = query_sentence.replace('(','')
         query_sentence = query_sentence.replace('หรือ','')
         query_sentence = query_sentence.replace(')','')
+        
     query_token_list = word_tokenize(query_sentence)
     new_query_token_list = []
     new_token = ''
     for index, token in enumerate(query_token_list):
         if token in thai_stopwords():
             new_token += token
+        elif re.search(r'([a-z])',token) != None:
+            new_query_token_list.append(token.upper())
+            new_query_token_list.append(token.lower())
+            new_query_token_list.append(token[0].upper()+token[1:].lower())
         else:
             new_token += token
             new_query_token_list.append(new_token)
@@ -93,9 +98,11 @@ def highlight_text(query_sentence,text):
     token_list_to_replace = list(dict.fromkeys(new_query_token_list))
     sorted_list = sorted(token_list_to_replace, key=len,reverse=True)
     for index,new_token in enumerate(sorted_list):
-        text = text.replace(new_token,f'|{index}|')
+        if new_token != ' ':
+            text = text.replace(new_token,f'|{index}|')
     for index,new_token in enumerate(sorted_list):
-        text = text.replace(f'|{index}|',f'<mark style="background-color:yellow;">{new_token}</mark>')
+        if new_token != ' ':
+            text = text.replace(f'|{index}|',f'<mark style="background-color:yellow;">{new_token}</mark>')
     return text
 
 st.set_page_config(layout="wide", page_title = 'RIA', page_icon = 'fav.png')
