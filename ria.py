@@ -35,6 +35,38 @@ class ria:
         self.Doc_Page_Text_2 = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
         self.Doc_Page_Sentence_2 = pd.read_csv('09_Output_Streamlib/Doc_Page_Sentence.csv')
         
+    def highlight_text(self, query_sentence, text):
+        if all([True if or_token in query_sentence else False  for or_token in ['(','หรือ',')']]):
+            query_sentence = query_sentence.replace('(','')
+            query_sentence = query_sentence.replace('หรือ','')
+            query_sentence = query_sentence.replace(')','')
+            
+        query_token_list = word_tokenize(query_sentence)
+        new_query_token_list = []
+        new_token = ''
+        for index, token in enumerate(query_token_list):
+            if token in thai_stopwords():
+                new_token += token
+            elif re.search(r'([a-z])',token) != None:
+                new_query_token_list.append(token.upper())
+                new_query_token_list.append(token.lower())
+                new_query_token_list.append(token[0].upper()+token[1:].lower())
+            else:
+                new_token += token
+                new_query_token_list.append(new_token)
+                new_query_token_list.append(token)
+                new_token = ''
+                
+        token_list_to_replace = list(dict.fromkeys(new_query_token_list))
+        sorted_list = sorted(token_list_to_replace, key=len,reverse=True)
+        for index,new_token in enumerate(sorted_list):
+            if new_token != ' ':
+                text = text.replace(new_token,f'|{index}|')
+        for index,new_token in enumerate(sorted_list):
+            if new_token != ' ':
+                text = text.replace(f'|{index}|',f'<mark style="background-color:yellow;">{new_token}</mark>')
+        return text
+        
     def step3_2_click_show_result(self, query_sentence,compare_sentence):    
         query_sentence = self.create_query_token_for_compair(query_sentence.replace('\n',''))
         compare_sentence = self.create_query_token_for_compair(compare_sentence.replace('\n',''))
@@ -307,7 +339,7 @@ class ria:
     #         Doc_ID_Name_len = len(Doc_Name)
     #         if Doc_ID_Name_len > 100:
     #             Doc_Name = Doc_Name[:round(Doc_ID_Name_len/2)]+'\n'+Doc_Name[round(Doc_ID_Name_len/2):]
-            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='dot')
+            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='dot',size =30)
         try:
             for Q_Doc_ID in all_pair_Doc_id_group['Q_Doc_ID'].unique():
                 Number_connect_nodes = len(all_pair_Doc_id_group[all_pair_Doc_id_group['Q_Doc_ID'] == Q_Doc_ID])
