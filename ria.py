@@ -307,7 +307,7 @@ class ria:
     #         Doc_ID_Name_len = len(Doc_Name)
     #         if Doc_ID_Name_len > 100:
     #             Doc_Name = Doc_Name[:round(Doc_ID_Name_len/2)]+'\n'+Doc_Name[round(Doc_ID_Name_len/2):]
-            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='circle')
+            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='dot')
         try:
             for Q_Doc_ID in all_pair_Doc_id_group['Q_Doc_ID'].unique():
                 Number_connect_nodes = len(all_pair_Doc_id_group[all_pair_Doc_id_group['Q_Doc_ID'] == Q_Doc_ID])
