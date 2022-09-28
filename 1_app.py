@@ -217,7 +217,7 @@ if get_params == {}:
                 key = 'filter_1',
             )
             filter_2 = st.multiselect(
-                'สถาบันการเงินผู้เกี่ยวข้อง:',
+                'ประเภทเอกสาร:',
                 options = filter2_from_result,
                 default = [],
                 key = 'filter_2',
