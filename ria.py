@@ -13,6 +13,7 @@ from pythainlp.corpus import thai_stopwords
 import statistics
 from colorama import Fore, Back, Style
 from statistics import StatisticsError
+import ast
 # Compare
 import pickle
 import difflib as dif
@@ -168,7 +169,42 @@ class ria:
         df_dict_pair_filter_node = self.filter_node_for_search(df_dict_pair,Result_search).groupby('Doc_Page_ID')['result'].agg('count').reset_index().rename(columns={'result':'Number_result'})
         Result_search = Result_search.merge(df_dict_pair_filter_node,on='Doc_Page_ID',how='left')
         return Result_search
-        
+    '''fix 20220928'''
+    def option_filter(self,Result_search):
+        filter1_from_result = list(set([i for sublist in Result_search['สถาบันผู้เกี่ยวข้อง'] for i in ast.literal_eval(sublist)]))
+        filter2_from_result = list(set([i for sublist in Result_search['ประเภทเอกสาร'] for i in ast.literal_eval(sublist)]))
+        filter3_from_result = list(set([i for sublist in Result_search['กฎหมาย'] for i in ast.literal_eval(sublist)])) 
+        return filter1_from_result, filter2_from_result, filter3_from_result
+
+    def filter_col(self,row,row_names,selected_filter_lists):
+        result_each_col = []
+        y = []
+        for row_number in range(len(row_names)):
+            row_name = row_names[row_number]
+            selected_filter_list = selected_filter_lists[row_number]
+            if len(selected_filter_list) == 0:
+                result_each_col.append(True)
+            elif any([True for i in selected_filter_list if i in row[row_name]]):
+                result_each_col.append(True)
+            else:
+                result_each_col.append(False)
+        if all(result_each_col):
+            return 1
+        else:
+            return 0
+
+    def filter_result_search(self,Result_search):
+        filter1_selected = self.filter1_selected
+        filter2_selected = self.filter2_selected
+        filter3_selected = self.filter3_selected
+        Result_search["Check"] = Result_search.apply(self.filter_col,
+                                                     args=(['สถาบันผู้เกี่ยวข้อง','ประเภทเอกสาร','กฎหมาย'],
+                                                           [filter1_selected,filter2_selected,filter3_selected]),
+                                                     axis=1)
+        Result_search = Result_search[Result_search['Check'] == 1].copy()
+        Result_search = Result_search.drop(columns=['Check'])
+        return Result_search
+    '''end fix 20220928'''
     def filter_node_for_search(self, df_dict_pair,Result_search):
         Result_search_unique = Result_search['Doc_Page_ID'].unique()
         df_dict_pair_filter = df_dict_pair[df_dict_pair['Doc_Page_ID'].isin(Result_search_unique)]
