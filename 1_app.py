@@ -271,9 +271,9 @@ if get_params == {}:
                                 pdf_html,
                                 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
                                 'Page ID: {}'.format(doc_meta.split('|')[1]),
-                                ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
-                                ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
-                                ' | '.join(filter_res_df['กฎหมาย'].values[i]),
+                                'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
+                                'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
+                                'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i]),
                             )
                         else:
                             card("", 
@@ -282,9 +282,9 @@ if get_params == {}:
                                 pdf_html,
                                 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
                                 'Page ID: {}'.format(doc_meta.split('|')[1]),
-                                ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
-                                ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
-                                ' | '.join(filter_res_df['กฎหมาย'].values[i]),
+                                'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
+                                'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
+                                'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i]),
                             )
                     cols = ['Doc_Page_ID','เรื่อง','Original_text']
                     csv = convert_df(res_df[cols])
