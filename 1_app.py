@@ -162,6 +162,7 @@ if get_params == {}:
     c11, c12, c13 = st.columns((14, 3, 3))
     with c11:
         sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "การจัดชั้นและการกันเงินสำรอง")
+        st.markdown("""หมายเหตุ: สามารถค้นหาเอกสารที่มีหลาย Keyword ที่สำคัญได้ผ่านการใช้ "(keyword1 หรือ keyword2)" เช่น (ความเสี่ยงด้านเครดิต หรือ ความเสี่ยงด้านปฏิบัติการ)""")
         query_params = st.experimental_get_query_params()
         try:
             # http://localhost:8501/?doc_meta=0002|0030|0028
