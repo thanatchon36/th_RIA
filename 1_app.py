@@ -30,6 +30,7 @@ from pythainlp.corpus import thai_stopwords
 import statistics
 from statistics import mode, StatisticsError
 from ria import ria
+from ast import literal_eval
 
 app = ria()
 
@@ -81,20 +82,23 @@ st.markdown(
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     """, unsafe_allow_html=True)
 
-def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
+def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2, filter_meta,filter_meta_2,filter_meta_3):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
             <h5 class="card-title">{source}</h5>
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
+            <h6>{filter_meta}</h6>
+            <h6>{filter_meta_2}</h6>
+            <h6>{filter_meta_3}</h6>
             <p class="card-text">{context}</p>
             {pdf_html}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
+def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2,filter_meta,filter_meta_2,filter_meta_3):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
     #<h5 class="card-title"><a href="http://localhost:8602/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
     st.markdown(f"""
@@ -103,6 +107,9 @@ def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
             <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
             <h6>{doc_meta}</h6>
             <h6>{doc_meta_2}</h6>
+            <h6>{filter_meta}</h6>
+            <h6>{filter_meta_2}</h6>
+            <h6>{filter_meta_3}</h6>
             <p class="card-text">{context}</p>
             {pdf_html}
         </div>
@@ -110,6 +117,7 @@ def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2):
     """, unsafe_allow_html=True)
 
 def card_2(source, source_2, context, pdf_html):
+# def card_2(source, source_2, context, pdf_html,filter_meta,filter_meta_2,filter_meta_3):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
@@ -122,21 +130,8 @@ def card_2(source, source_2, context, pdf_html):
     </div>
     """, unsafe_allow_html=True)
 
-def card_3(source, context, pdf_html, doc_meta, doc_meta_2, doc_meta_3):
-    st.markdown(f"""
-    <div class="card" style="margin:1rem;">
-        <div class="card-body">
-            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria/?doc_meta={source.split(' ')[0]}" class="card-link">{source}</a></h5>
-            <h6>{doc_meta}</h6>
-            <h6>{doc_meta_2}</h6>
-            <h6>{doc_meta_3}</h6>
-            <p class="card-text">{context}</p>
-            {pdf_html}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 def card_4(source, context, pdf_html, doc_meta):
+# def card_4(source, context, pdf_html, doc_meta,filter_meta,filter_meta_2,filter_meta_3):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
@@ -227,6 +222,7 @@ if get_params == {}:
             # st.markdown(st.session_state['filter_2'])
             app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
             res_df_02 = reset(app.filter_result_search(res_df_01))
+            res_df_02 = res_df_02.sort_values(by=['Score']).reset_index(drop=True)
             try:
                 with st.spinner("Loading..."):
                     G = app.create_network(res_df_02)
@@ -253,6 +249,12 @@ if get_params == {}:
                 if len(res_df) > 0:
                     st.session_state['max_page'] = res_df['page'].max()
                     filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
+                    filter_res_df['สถาบันผู้เกี่ยวข้อง'] = filter_res_df['สถาบันผู้เกี่ยวข้อง'].apply(literal_eval)
+                    filter_res_df['ประเภทเอกสาร'] = filter_res_df['ประเภทเอกสาร'].apply(literal_eval)
+                    filter_res_df['กฎหมาย'] = filter_res_df['กฎหมาย'].apply(literal_eval)
+
+                    st.dataframe(filter_res_df)
+
                     for i in range(len(filter_res_df)):
                         content = filter_res_df['Original_text'].values[i]
                         doc_name = filter_res_df['เรื่อง'].values[i]
@@ -269,6 +271,9 @@ if get_params == {}:
                                 pdf_html,
                                 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
                                 'Page ID: {}'.format(doc_meta.split('|')[1]),
+                                ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
+                                ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
+                                ' | '.join(filter_res_df['กฎหมาย'].values[i]),
                             )
                         else:
                             card("", 
@@ -277,6 +282,9 @@ if get_params == {}:
                                 pdf_html,
                                 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
                                 'Page ID: {}'.format(doc_meta.split('|')[1]),
+                                ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
+                                ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
+                                ' | '.join(filter_res_df['กฎหมาย'].values[i]),
                             )
                     cols = ['Doc_Page_ID','เรื่อง','Original_text']
                     csv = convert_df(res_df[cols])
@@ -321,6 +329,9 @@ elif 'code_id' in get_params:
         'Page{}'.format(doc_meta.split('|')[1]),
         '...{}...'.format(content),
         pdf_html,
+        # 'ทด',
+        # 'ทด',
+        # 'ทด',
     )
 
     part_two_df = app.part_two_show_compare(doc_meta)
@@ -338,6 +349,9 @@ elif 'code_id' in get_params:
                 '{}'.format(conv.convert(result_sentence)),
                 pdf_html,
                 page_id,
+                # ' | '.join(part_two_df['สถาบันผู้เกี่ยวข้อง'].values[index]),
+                # ' | '.join(part_two_df['ประเภทเอกสาร'].values[index]),
+                # ' | '.join(part_two_df['กฎหมาย'].values[index]),
             )
 
     with c22:
@@ -351,4 +365,7 @@ elif 'code_id' in get_params:
                 '{}'.format(conv.convert(result_sentence)),
                 pdf_html,
                 page_id,
+                # ' | '.join(part_two_df['สถาบันผู้เกี่ยวข้อง'].values[index]),
+                # ' | '.join(part_two_df['ประเภทเอกสาร'].values[index]),
+                # ' | '.join(part_two_df['กฎหมาย'].values[index]),
             )
