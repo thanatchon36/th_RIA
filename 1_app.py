@@ -159,7 +159,7 @@ get_params = st.experimental_get_query_params()
 if get_params == {}:
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
     st.write("""# RIA Live Demo""")
-    c11, c12, c13 = st.columns((14, 3, 3))
+    c11, c12, c13, c14 = st.columns((6, 2, 4, 4))
     with c11:
         sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "การจัดชั้นและการกันเงินสำรอง")
         st.markdown("""หมายเหตุ: สามารถค้นหาเอกสารที่มีหลาย Keyword ที่สำคัญได้ผ่านการใช้ "(keyword1 หรือ keyword2)" เช่น (ความเสี่ยงด้านเครดิต หรือ ความเสี่ยงด้านปฏิบัติการ)""")
@@ -205,19 +205,22 @@ if get_params == {}:
             else:
                 res_df_01 = ori_res_df.copy()
 
-            filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
-            filter_1 = st.multiselect(
-                'สถาบันการเงินผู้เกี่ยวข้อง:',
-                options = filter1_from_result,
-                default = [],
-                key = 'filter_1',
-            )
-            filter_2 = st.multiselect(
-                'ประเภทเอกสาร:',
-                options = filter2_from_result,
-                default = [],
-                key = 'filter_2',
-            )
+            with c13:
+                filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
+                filter_1 = st.multiselect(
+                    'สถาบันการเงินผู้เกี่ยวข้อง:',
+                    options = filter1_from_result,
+                    default = [],
+                    key = 'filter_1',
+                )
+            
+            with c14:
+                filter_2 = st.multiselect(
+                    'ประเภทเอกสาร:',
+                    options = filter2_from_result,
+                    default = [],
+                    key = 'filter_2',
+                )
             # st.markdown(st.session_state['show_result_type'])
             # st.markdown(st.session_state['filter_1'])
             # st.markdown(st.session_state['filter_2'])
