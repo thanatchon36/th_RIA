@@ -223,7 +223,7 @@ if get_params == {}:
             # st.markdown(st.session_state['filter_2'])
             app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
             res_df_02 = reset(app.filter_result_search(res_df_01))
-            res_df_02 = res_df_02.sort_values(by=['Score']).reset_index(drop=True)
+            # res_df_02 = res_df_02.sort_values(by=['Score']).reset_index(drop=True)
             try:
                 with st.spinner("Loading..."):
                     G = app.create_network(res_df_02)

@@ -203,6 +203,7 @@ class ria:
                                                      axis=1)
         Result_search = Result_search[Result_search['Check'] == 1].copy()
         Result_search = Result_search.drop(columns=['Check'])
+        Result_search = Result_search.sort_values(by=['Score'], ascending=False).reset_index(drop=True)
         return Result_search
     '''end fix 20220928'''
     def filter_node_for_search(self, df_dict_pair,Result_search):
