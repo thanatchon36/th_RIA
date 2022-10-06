@@ -134,14 +134,14 @@ def card_4(source, context, pdf_html, doc_meta):
 # def card_4(source, context, pdf_html, doc_meta,filter_meta,filter_meta_2,filter_meta_3):
     #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
     st.markdown(f"""
-    <div class="card" style="margin:1rem;">
-        <div class="card-body">
-            <h5 class="card-title">{source}</h5>
-            <h6>{doc_meta}</h6>
-            <p class="card-text">{context}</p>
-            {pdf_html}
+        <div class="card" style="margin:1rem;">
+            <div class="card-body h-100">
+                <h5 class="card-title">{source}</h5>
+                <h6>{doc_meta}</h6>
+                <p class="card-text">{context}</p>
+                {pdf_html}
+            </div>
         </div>
-    </div>
     """, unsafe_allow_html=True)
 
 # @st.cache(suppress_st_warning=True)
@@ -341,35 +341,44 @@ elif 'code_id' in get_params:
     part_two_df = app.part_two_show_compare(doc_meta)
     # st.dataframe(part_two_df)
 
-    c21, c22 = st.columns((4, 4))
-    with c21:
-        for index in range(len(part_two_df)):
-            doc_id = 'Doc' + part_two_df['Q_Doc_ID'].values[index]
-            page_id = "Page" + part_two_df['Q_Page_ID'].values[index] + ' Sentence'  + part_two_df['Q_Sen_ID'].values[index]
-            result_sentence = part_two_df['query_Sentence_show'].values[index]
-            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['Q_Doc_ID'].values[index]]['File_Code'].values[0])
-            card_4( 
-                doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index],
-                '{}'.format(conv.convert(result_sentence)),
-                pdf_html,
-                page_id,
-                # ' | '.join(part_two_df['สถาบันผู้เกี่ยวข้อง'].values[index]),
-                # ' | '.join(part_two_df['ประเภทเอกสาร'].values[index]),
-                # ' | '.join(part_two_df['กฎหมาย'].values[index]),
-            )
+    st.markdown("<br>", unsafe_allow_html=True)
+    for index in range(len(part_two_df)):
+        doc_id = 'Doc' + part_two_df['Q_Doc_ID'].values[index]
+        page_id = "Page" + part_two_df['Q_Page_ID'].values[index] + ' Sentence'  + part_two_df['Q_Sen_ID'].values[index]
+        result_sentence = part_two_df['query_Sentence_show'].values[index]
+        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['Q_Doc_ID'].values[index]]['File_Code'].values[0])
+        left_title = doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index]
+        left_sen = conv.convert(result_sentence)
+        left_page_id = page_id
+        left_pdf = pdf_html
 
-    with c22:
-        for index in range(len(part_two_df)):
-            doc_id = 'Doc' + part_two_df['R_Doc_ID'].values[index]
-            page_id = "Page" + part_two_df['R_Page_ID'].values[index] + ' Sentence'  + part_two_df['R_Sen_ID'].values[index]
-            result_sentence = part_two_df['result_Sentence_show'].values[index]
-            pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
-            card_4( 
-                doc_id + ' ' + part_two_df['R_เรื่อง'].values[index],
-                '{}'.format(conv.convert(result_sentence)),
-                pdf_html,
-                page_id,
-                # ' | '.join(part_two_df['สถาบันผู้เกี่ยวข้อง'].values[index]),
-                # ' | '.join(part_two_df['ประเภทเอกสาร'].values[index]),
-                # ' | '.join(part_two_df['กฎหมาย'].values[index]),
-            )
+        doc_id = 'Doc' + part_two_df['R_Doc_ID'].values[index]
+        page_id = "Page" + part_two_df['R_Page_ID'].values[index] + ' Sentence'  + part_two_df['R_Sen_ID'].values[index]
+        result_sentence = part_two_df['result_Sentence_show'].values[index]
+        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
+        right_title = doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index]
+        right_sen = conv.convert(result_sentence)
+        right_page_id = page_id
+        right_pdf = pdf_html
+
+        st.markdown(f""" 
+            <div class="card-deck">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{left_title}</h5>
+                        <h6>{left_page_id}</h6>
+                        <p class="card-text">{left_sen}</p>
+                        {left_pdf}
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{right_title}</h5>
+                        <h6>{right_page_id}</h6>
+                        <p class="card-text">{right_sen}</p>
+                        {right_pdf}
+                    </div>
+                </div>
+            </div>
+            <br>
+        """, unsafe_allow_html=True)
