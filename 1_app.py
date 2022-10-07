@@ -394,7 +394,6 @@ elif 'code_id' in get_params:
         """, unsafe_allow_html=True)
 
 elif 'qa' in get_params:
-    st.session_state['show_result_type'] = 'all'
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
     st.write("""# QA RIA Live Demo""")
     c11, c12, c13, c14 = st.columns((6, 2, 4, 4))
@@ -411,7 +410,7 @@ elif 'qa' in get_params:
     with c12:
         show_result_type = st.radio(
             "Show Result:",
-            ('Distinct Documents', 'All'), key = "show_result_type")
+            ('All', 'Distinct Documents'), key = "show_result_type")
 
     if 'filter_1' not in st.session_state:
         st.session_state['filter_1'] = []
