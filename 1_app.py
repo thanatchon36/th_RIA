@@ -154,6 +154,16 @@ def convert_df(df):
     # return df.to_csv().encode('utf-8')
     return df.to_csv(index = False).encode('utf-8-sig')
 
+@st.cache(allow_output_mutation=True)
+def get_answer(sentence_query, context_list):
+    json_params = {}
+    json_params['question'] = sentence_query
+    json_params['context'] = context_list
+    res = requests.post('http://localhost:6101/qa_pipeline',
+                        json = json_params
+                    )
+    return res.json()
+
 get_params = st.experimental_get_query_params()
 # st.markdown(get_params)
 if get_params == {}:
@@ -382,3 +392,186 @@ elif 'code_id' in get_params:
             </div>
             <br>
         """, unsafe_allow_html=True)
+
+elif 'qa' in get_params:
+    st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
+    st.write("""# QA RIA Live Demo""")
+    c11, c12, c13, c14 = st.columns((6, 2, 4, 4))
+    with c11:
+        sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "การจัดชั้นและการกันเงินสำรอง")
+        st.markdown("""หมายเหตุ: สามารถค้นหาเอกสารที่มีหลาย Keyword ที่สำคัญได้ผ่านการใช้ "(keyword1 หรือ keyword2)" เช่น (ความเสี่ยงด้านเครดิต หรือ ความเสี่ยงด้านปฏิบัติการ)""")
+        query_params = st.experimental_get_query_params()
+        try:
+            # http://localhost:8501/?doc_meta=0002|0030|0028
+            query_option = query_params['doc_meta'][0]
+            st.markdown(query_option)
+        except:
+            pass
+    with c12:
+        show_result_type = st.radio(
+            "Show Result:",
+            ('Distinct Documents', 'All'), key = "show_result_type")
+
+    if 'filter_1' not in st.session_state:
+        st.session_state['filter_1'] = []
+    if 'filter_2' not in st.session_state:
+        st.session_state['filter_2'] = []
+
+    if sentence_query: # or query != '' :
+        # Save logs
+        current_time = str(datetime.now())[:19]
+        if os.path.exists(os.getcwd() + '/log.csv') == False:
+            pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', index = False)
+        else:
+            pd.DataFrame([current_time,sentence_query]).T.to_csv('log.csv', mode='a', index=False, header=False)
+
+        # Init State Sessioin
+        if 'page' not in st.session_state:
+            st.session_state['page'] = 1
+
+        app.query = sentence_query
+
+        try:
+            ori_res_df = app.step1_user_search()
+
+            with st.spinner("QA Processing..."):
+                res_list = get_answer(sentence_query, list(ori_res_df['Original_text'].values))
+
+            score_list = [each['score'] for each in res_list]
+            ans_list = [each['answer'] for each in res_list]
+            ori_res_df['answer'] = ans_list
+            ori_res_df['answer_score'] = score_list
+
+            ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
+
+            if show_result_type == 'Distinct Documents':
+                res_df_01 = ori_res_df.copy()
+                res_df_01 = res_df_01.groupby('Doc_ID').first().reset_index()
+                res_df_01 = reset(res_df_01.sort_values(by = 'Score', ascending = False))
+            else:
+                res_df_01 = ori_res_df.copy()
+
+            with c13:
+                filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
+                filter_1 = st.multiselect(
+                    'สถาบันการเงินผู้เกี่ยวข้อง:',
+                    options = filter1_from_result,
+                    default = [],
+                    key = 'filter_1',
+                )
+            
+            with c14:
+                filter_2 = st.multiselect(
+                    'ประเภทเอกสาร:',
+                    options = filter2_from_result,
+                    default = [],
+                    key = 'filter_2',
+                )
+            # st.markdown(st.session_state['show_result_type'])
+            # st.markdown(st.session_state['filter_1'])
+            # st.markdown(st.session_state['filter_2'])
+            app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
+            res_df_02 = reset(app.filter_result_search(res_df_01))
+            res_df_02 = reset(res_df_02.sort_values(by=['answer_score'], ascending = False))
+
+            c21, c22 = st.columns((14, 6))
+            with c21:
+                res_df = res_df_02.copy()
+                res_df['page'] = res_df.index
+                res_df['page'] = res_df['page'] / 10
+                res_df['page'] = res_df['page'].astype(int)
+                res_df['page'] = res_df['page'] + 1
+
+                doc_df = res_df.copy()
+                doc_df = doc_df[['Doc_ID', 'เรื่อง','File_Code']].drop_duplicates()
+                doc_df['sort_id'] = doc_df['Doc_ID'].astype(int)
+                doc_df = reset(doc_df.sort_values(by = 'sort_id'))
+                
+                if len(res_df) > 0:
+                    st.session_state['max_page'] = res_df['page'].max()
+                    filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
+                    filter_res_df['สถาบันผู้เกี่ยวข้อง'] = filter_res_df['สถาบันผู้เกี่ยวข้อง'].apply(literal_eval)
+                    filter_res_df['ประเภทเอกสาร'] = filter_res_df['ประเภทเอกสาร'].apply(literal_eval)
+                    filter_res_df['กฎหมาย'] = filter_res_df['กฎหมาย'].apply(literal_eval)
+
+                    for i in range(len(filter_res_df)):
+                        content = filter_res_df['Original_text'].values[i]
+                        doc_name = filter_res_df['เรื่อง'].values[i]
+                        doc_meta = filter_res_df['Doc_Page_ID'].values[i]
+
+                        answer = filter_res_df['answer'].values[i]
+                        answer_score = filter_res_df['answer_score'].values[i]
+                        content = content.replace(answer, f"""<mark style="background-color:yellow;">{answer}</mark>""")
+                        # content = app.highlight_text(sentence_query, content)
+
+                        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
+                        if filter_res_df['Number_result'].values[i] > 0:
+
+                            row_1 = 'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)'
+                            row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
+                            row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
+                            row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
+                            row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
+                            row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
+                            row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
+                            content = '...{}...'.format(content)
+                            st.markdown(f"""
+                            <div class="card" style="margin:1rem;">
+                                <div class="card-body">
+                                    <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={row_1.split(' ')[0]}" class="card-link">{row_1}</a></h5>
+                                    <h6>{row_2}</h6>
+                                    <h6>{row_3}</h6>
+                                    <h6>{row_4}</h6>
+                                    <h6>{row_5}</h6>
+                                    <h6>{row_6}</h6>
+                                    <p class="card-text">{content}</p>
+                                    <h6>{row_7}</h6>
+                                    {pdf_html}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        else:
+                            row_1 = 'Doc' + doc_meta.replace('|','|Page')
+                            row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
+                            row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
+                            row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
+                            row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
+                            row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
+                            row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
+                            content = '...{}...'.format(content)
+                            st.markdown(f"""
+                            <div class="card" style="margin:1rem;">
+                                <div class="card-body">
+                                    <h5 class="card-title">{row_1}</h5>
+                                    <h6>{row_2}</h6>
+                                    <h6>{row_3}</h6>
+                                    <h6>{row_4}</h6>
+                                    <h6>{row_5}</h6>
+                                    <h6>{row_6}</h6>
+                                    <p class="card-text">{content}</p>
+                                    {pdf_html}
+                                    <h6>{row_7}</h6>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    cols = ['Doc_Page_ID','เรื่อง','Original_text']
+                    csv = convert_df(res_df[cols])
+
+            if 'max_page' not in st.session_state:
+                st.session_state['max_page'] = 10
+            c41, c42 = st.columns((14, 6))
+            with c41:
+                st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
+                if int(st.session_state['max_page']) > 1:
+                    page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
+                st.download_button(
+                    label="Download search results as CSV",
+                    data=csv,
+                    file_name=f"{sentence_query}_results.csv",
+                    mime='text/csv',
+                )
+                st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+        except:
+            st.markdown("## ไม่พบข้อความที่ค้นหา")
+            pass
