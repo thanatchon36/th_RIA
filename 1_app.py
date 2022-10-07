@@ -412,10 +412,10 @@ elif 'qa' in get_params:
             "Show Result:",
             ('All', 'Distinct Documents'), key = "show_result_type")
 
-    if 'filter_1' not in st.session_state:
-        st.session_state['filter_1'] = []
-    if 'filter_2' not in st.session_state:
-        st.session_state['filter_2'] = []
+    # if 'filter_1' not in st.session_state:
+    #     st.session_state['filter_1'] = []
+    # if 'filter_2' not in st.session_state:
+    #     st.session_state['filter_2'] = []
 
     if sentence_query: # or query != '' :
         # Save logs
