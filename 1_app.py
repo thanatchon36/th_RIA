@@ -501,8 +501,9 @@ elif 'qa' in get_params:
 
                         answer = filter_res_df['answer'].values[i]
                         answer_score = filter_res_df['answer_score'].values[i]
-                        content = content.replace(answer, f"""<mark style="background-color:yellow;">{answer}</mark>""")
-                        # content = app.highlight_text(sentence_query, content)
+                        answer_space_list = answer.split(' ')
+                        for answer_space in answer_space_list:
+                            content = content.replace(answer_space, f"""<mark style="background-color:yellow;">{answer_space}</mark>""")
 
                         pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                         if filter_res_df['Number_result'].values[i] > 0:
