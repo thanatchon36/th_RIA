@@ -527,8 +527,8 @@ elif 'qa' in get_params:
                                     <h6>{row_4}</h6>
                                     <h6>{row_5}</h6>
                                     <h6>{row_6}</h6>
-                                    <p class="card-text">{content}</p>
                                     <h6>{row_7}</h6>
+                                    <p class="card-text">{content}</p>
                                     {pdf_html}
                                 </div>
                             </div>
@@ -555,9 +555,9 @@ elif 'qa' in get_params:
                                     <h6>{row_4}</h6>
                                     <h6>{row_5}</h6>
                                     <h6>{row_6}</h6>
+                                    <h6>{row_7}</h6>
                                     <p class="card-text">{content}</p>
                                     {pdf_html}
-                                    <h6>{row_7}</h6>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
