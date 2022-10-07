@@ -451,27 +451,29 @@ elif 'qa' in get_params:
         else:
             res_df_01 = ori_res_df.copy()
 
-        with c13:
-            filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
-            filter_1 = st.multiselect(
-                'สถาบันการเงินผู้เกี่ยวข้อง:',
-                options = filter1_from_result,
-                default = [],
-                key = 'filter_1',
-            )
+        # with c13:
+        #     filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
+        #     filter_1 = st.multiselect(
+        #         'สถาบันการเงินผู้เกี่ยวข้อง:',
+        #         options = filter1_from_result,
+        #         default = [],
+        #         key = 'filter_1',
+        #     )
         
-        with c14:
-            filter_2 = st.multiselect(
-                'ประเภทเอกสาร:',
-                options = filter2_from_result,
-                default = [],
-                key = 'filter_2',
-            )
+        # with c14:
+        #     filter_2 = st.multiselect(
+        #         'ประเภทเอกสาร:',
+        #         options = filter2_from_result,
+        #         default = [],
+        #         key = 'filter_2',
+        #     )
         # st.markdown(st.session_state['show_result_type'])
         # st.markdown(st.session_state['filter_1'])
         # st.markdown(st.session_state['filter_2'])
-        app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
-        res_df_02 = reset(app.filter_result_search(res_df_01))
+        # app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
+        # res_df_02 = reset(app.filter_result_search(res_df_01))
+
+        res_df_02 = res_df_01.copy()
         res_df_02 = reset(res_df_02.sort_values(by=['answer_score'], ascending = False))
 
         c21, c22 = st.columns((14, 6))
