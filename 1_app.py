@@ -407,7 +407,7 @@ elif 'qa' in get_params:
         try:
             # http://localhost:8501/?doc_meta=0002|0030|0028
             query_option = query_params['doc_meta'][0]
-            st.markdown(query_option)
+            # st.markdown(query_option)
         except:
             pass
     with c12:
@@ -470,9 +470,9 @@ elif 'qa' in get_params:
                 default = [],
                 key = 'filter_2',
             )
-        st.markdown(st.session_state['show_result_type'])
-        st.markdown(st.session_state['filter_1'])
-        st.markdown(st.session_state['filter_2'])
+        # st.markdown(st.session_state['show_result_type'])
+        # st.markdown(st.session_state['filter_1'])
+        # st.markdown(st.session_state['filter_2'])
         app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
         res_df_02 = reset(app.filter_result_search(res_df_01))
 
