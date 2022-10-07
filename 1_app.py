@@ -394,6 +394,7 @@ elif 'code_id' in get_params:
         """, unsafe_allow_html=True)
 
 elif 'qa' in get_params:
+    st.session_state['show_result_type'] = 'all'
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
     st.write("""# QA RIA Live Demo""")
     c11, c12, c13, c14 = st.columns((6, 2, 4, 4))
@@ -506,7 +507,6 @@ elif 'qa' in get_params:
 
                         pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                         if filter_res_df['Number_result'].values[i] > 0:
-
                             row_1 = 'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)'
                             row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
                             row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
@@ -515,9 +515,12 @@ elif 'qa' in get_params:
                             row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
                             row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
                             content = '...{}...'.format(content)
+                            answer = 'คำตอบ: {}'.format(answer)
+
                             st.markdown(f"""
                             <div class="card" style="margin:1rem;">
                                 <div class="card-body">
+                                    <h6>{answer}</h6>
                                     <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={row_1.split(' ')[0]}" class="card-link">{row_1}</a></h5>
                                     <h6>{row_2}</h6>
                                     <h6>{row_3}</h6>
@@ -540,9 +543,12 @@ elif 'qa' in get_params:
                             row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
                             row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
                             content = '...{}...'.format(content)
+                            answer = 'คำตอบ: {}'.format(answer)
+
                             st.markdown(f"""
                             <div class="card" style="margin:1rem;">
                                 <div class="card-body">
+                                    <h6>{answer}</h6>
                                     <h5 class="card-title">{row_1}</h5>
                                     <h6>{row_2}</h6>
                                     <h6>{row_3}</h6>
