@@ -248,7 +248,7 @@ if get_params == {}:
                 filter_res_df['ประเภทเอกสาร'] = filter_res_df['ประเภทเอกสาร'].apply(literal_eval)
                 filter_res_df['กฎหมาย'] = filter_res_df['กฎหมาย'].apply(literal_eval)
 
-                st.dataframe(filter_res_df)
+                # st.dataframe(filter_res_df)
 
                 for i in range(len(filter_res_df)):
                     content = filter_res_df['Original_text'].values[i]
