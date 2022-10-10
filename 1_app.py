@@ -271,7 +271,6 @@ if get_params == {}:
                             <div class="card-body">
                                 <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
                                 <h6>{doc_no}</h6>
-                                <h6>{doc_meta}</h6>
                                 <h6>{doc_meta_2}</h6>
                                 <h6>{filter_meta}</h6>
                                 <h6>{filter_meta_2}</h6>
@@ -288,7 +287,6 @@ if get_params == {}:
                             <div class="card-body">
                                 <h5 class="card-title">{source}</h5>
                                 <h6>{doc_no}</h6>
-                                <h6>{doc_meta}</h6>
                                 <h6>{doc_meta_2}</h6>
                                 <h6>{filter_meta}</h6>
                                 <h6>{filter_meta_2}</h6>
