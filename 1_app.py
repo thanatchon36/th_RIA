@@ -85,25 +85,7 @@ st.markdown(
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     """, unsafe_allow_html=True)
 
-def card(id_val, source, context, pdf_html, doc_meta, doc_meta_2, filter_meta,filter_meta_2,filter_meta_3):
-    st.markdown(f"""
-    <div class="card" style="margin:1rem;">
-        <div class="card-body">
-            <h5 class="card-title">{source}</h5>
-            <h6>{doc_meta}</h6>
-            <h6>{doc_meta_2}</h6>
-            <h6>{filter_meta}</h6>
-            <h6>{filter_meta_2}</h6>
-            <h6>{filter_meta_3}</h6>
-            <p class="card-text">{context}</p>
-            {pdf_html}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2,filter_meta,filter_meta_2,filter_meta_3):
-    #<div class="card text-white bg-dark mb-3" style="margin:1rem;">
-    #<h5 class="card-title"><a href="http://localhost:8602/th_ria_explorer/?doc_meta={source}" class="card-link">{source}</a></h5>
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
@@ -207,129 +189,142 @@ if get_params == {}:
 
         app.query = sentence_query
 
+        # try:
+        ori_res_df = app.step1_user_search()
+        ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
+
+        if show_result_type == 'Distinct Documents':
+            res_df_01 = ori_res_df.copy()
+            res_df_01 = res_df_01.groupby('Doc_ID').first().reset_index()
+            resres_df_01_df = reset(res_df_01.sort_values(by = 'Score', ascending = False))
+        else:
+            res_df_01 = ori_res_df.copy()
+
+        with c13:
+            filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
+            filter_1 = st.multiselect(
+                'สถาบันการเงินผู้เกี่ยวข้อง:',
+                options = filter1_from_result,
+                default = [],
+                key = 'filter_1',
+            )
+        
+        with c14:
+            filter_2 = st.multiselect(
+                'ประเภทเอกสาร:',
+                options = filter2_from_result,
+                default = [],
+                key = 'filter_2',
+            )
+        app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
+        res_df_02 = reset(app.filter_result_search(res_df_01))
         try:
-            ori_res_df = app.step1_user_search()
-            ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
-
-            if show_result_type == 'Distinct Documents':
-                res_df_01 = ori_res_df.copy()
-                res_df_01 = res_df_01.groupby('Doc_ID').first().reset_index()
-                resres_df_01_df = reset(res_df_01.sort_values(by = 'Score', ascending = False))
-            else:
-                res_df_01 = ori_res_df.copy()
-
-            with c13:
-                filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
-                filter_1 = st.multiselect(
-                    'สถาบันการเงินผู้เกี่ยวข้อง:',
-                    options = filter1_from_result,
-                    default = [],
-                    key = 'filter_1',
-                )
-            
-            with c14:
-                filter_2 = st.multiselect(
-                    'ประเภทเอกสาร:',
-                    options = filter2_from_result,
-                    default = [],
-                    key = 'filter_2',
-                )
-            # st.markdown(st.session_state['show_result_type'])
-            # st.markdown(st.session_state['filter_1'])
-            # st.markdown(st.session_state['filter_2'])
-            app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
-            res_df_02 = reset(app.filter_result_search(res_df_01))
-            # res_df_02 = res_df_02.sort_values(by=['Score']).reset_index(drop=True)
-            try:
-                with st.spinner("Loading..."):
-                    G = app.create_network(res_df_02)
-                    G.show('nx.html')
-                    HtmlFile = open('nx.html','r',encoding='utf-8')
-                    draw_network(HtmlFile)
-                    st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
-            except StatisticsError:
-                pass
-
-            c21, c22 = st.columns((14, 6))
-            with c21:
-                res_df = res_df_02.copy()
-                res_df['page'] = res_df.index
-                res_df['page'] = res_df['page'] / 10
-                res_df['page'] = res_df['page'].astype(int)
-                res_df['page'] = res_df['page'] + 1
-
-                doc_df = res_df.copy()
-                doc_df = doc_df[['Doc_ID', 'เรื่อง','File_Code']].drop_duplicates()
-                doc_df['sort_id'] = doc_df['Doc_ID'].astype(int)
-                doc_df = reset(doc_df.sort_values(by = 'sort_id'))
-                
-                if len(res_df) > 0:
-                    st.session_state['max_page'] = res_df['page'].max()
-                    filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
-                    filter_res_df['สถาบันผู้เกี่ยวข้อง'] = filter_res_df['สถาบันผู้เกี่ยวข้อง'].apply(literal_eval)
-                    filter_res_df['ประเภทเอกสาร'] = filter_res_df['ประเภทเอกสาร'].apply(literal_eval)
-                    filter_res_df['กฎหมาย'] = filter_res_df['กฎหมาย'].apply(literal_eval)
-
-                    # st.dataframe(filter_res_df)
-
-                    for i in range(len(filter_res_df)):
-                        content = filter_res_df['Original_text'].values[i]
-                        doc_name = filter_res_df['เรื่อง'].values[i]
-                        doc_meta = filter_res_df['Doc_Page_ID'].values[i]
-                        # for each_j in get_found_token(st.session_state['sentence_query'], content):
-                        #     content = content.replace(each_j, f"<mark>{each_j}</mark>")
-                        # content = content.replace(sentence_query, f"""<mark style="background-color:yellow;">{sentence_query}</mark>""")
-                        content = app.highlight_text(sentence_query, content)
-                        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
-                        if filter_res_df['Number_result'].values[i] > 0:
-                            link_card("", 
-                                'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)',
-                                '...{}...'.format(content),
-                                pdf_html,
-                                'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
-                                'Page ID: {}'.format(doc_meta.split('|')[1]),
-                                'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
-                                'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
-                                'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i]),
-                            )
-                        else:
-                            card("", 
-                                'Doc' + doc_meta.replace('|','|Page'),
-                                '...{}...'.format(content),
-                                pdf_html,
-                                'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name,
-                                'Page ID: {}'.format(doc_meta.split('|')[1]),
-                                'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i]),
-                                'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i]),
-                                'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i]),
-                            )
-                    cols = ['Doc_Page_ID','เรื่อง','Original_text']
-                    csv = convert_df(res_df[cols])
-
-            with c22:
-                st.markdown("""Remark:\n- Scroll เพื่อซุมเข้าออก\n- Click เพื่อเลื่อน""")
-                markdown_text = "### List of Documents"
-                for index, row in doc_df.iterrows():
-                    markdown_text = markdown_text + """\n[{}: {}](http://pc140032646.bot.or.th/th_pdf/{})\n""".format(row['Doc_ID'], row['เรื่อง'], row['File_Code'])
-                st.markdown(markdown_text)
-
-            if 'max_page' not in st.session_state:
-                st.session_state['max_page'] = 10
-            c41, c42 = st.columns((14, 6))
-            with c41:
-                st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
-                if int(st.session_state['max_page']) > 1:
-                    page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
-                st.download_button(
-                    label="Download search results as CSV",
-                    data=csv,
-                    file_name=f"{sentence_query}_results.csv",
-                    mime='text/csv',
-                )
-                st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
-        except:
-            st.markdown("## ไม่พบข้อความที่ค้นหา")
+            with st.spinner("Loading..."):
+                G = app.create_network(res_df_02)
+                G.show('nx.html')
+                HtmlFile = open('nx.html','r',encoding='utf-8')
+                draw_network(HtmlFile)
+                st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
+        except StatisticsError:
             pass
+
+        c21, c22 = st.columns((14, 6))
+        with c21:
+            res_df = res_df_02.copy()
+            res_df['page'] = res_df.index
+            res_df['page'] = res_df['page'] / 10
+            res_df['page'] = res_df['page'].astype(int)
+            res_df['page'] = res_df['page'] + 1
+
+            doc_df = res_df.copy()
+            doc_df = doc_df[['Doc_ID', 'เรื่อง','File_Code']].drop_duplicates()
+            doc_df['sort_id'] = doc_df['Doc_ID'].astype(int)
+            doc_df = reset(doc_df.sort_values(by = 'sort_id'))
+            
+            if len(res_df) > 0:
+                st.session_state['max_page'] = res_df['page'].max()
+                filter_res_df = reset(res_df[res_df['page'] == st.session_state['page']])
+                filter_res_df['สถาบันผู้เกี่ยวข้อง'] = filter_res_df['สถาบันผู้เกี่ยวข้อง'].apply(literal_eval)
+                filter_res_df['ประเภทเอกสาร'] = filter_res_df['ประเภทเอกสาร'].apply(literal_eval)
+                filter_res_df['กฎหมาย'] = filter_res_df['กฎหมาย'].apply(literal_eval)
+
+                st.dataframe(filter_res_df)
+
+                for i in range(len(filter_res_df)):
+                    content = filter_res_df['Original_text'].values[i]
+                    doc_name = filter_res_df['เรื่อง'].values[i]
+                    doc_meta = filter_res_df['Doc_Page_ID'].values[i]
+                    content = app.highlight_text(sentence_query, content)
+                    pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
+                    
+                    context = '...{}...'.format(content)
+                    doc_meta = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
+                    doc_meta_2 = 'Page ID: {}'.format(filter_res_df['Doc_Page_ID'].values[i].split('|')[1])
+                    filter_meta = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
+                    filter_meta_2 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
+                    filter_meta_3 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
+                    doc_no = 'ประกาศเลขที่: {}'.format(filter_res_df['เลขที่ (Thai)'].values[i])
+                    if filter_res_df['Number_result'].values[i] > 0:
+                        source = doc_meta.replace('|','|Page') + ' (Click to See This Page)'
+                        st.markdown(f"""
+                        <div class="card" style="margin:1rem;">
+                            <div class="card-body">
+                                <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
+                                <h6>{doc_no}</h6>
+                                <h6>{doc_meta}</h6>
+                                <h6>{doc_meta_2}</h6>
+                                <h6>{filter_meta}</h6>
+                                <h6>{filter_meta_2}</h6>
+                                <h6>{filter_meta_3}</h6>
+                                <p class="card-text">{context}</p>
+                                {pdf_html}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        source = doc_meta.replace('|','|Page')
+                        st.markdown(f"""
+                        <div class="card" style="margin:1rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">{source}</h5>
+                                <h6>{doc_no}</h6>
+                                <h6>{doc_meta}</h6>
+                                <h6>{doc_meta_2}</h6>
+                                <h6>{filter_meta}</h6>
+                                <h6>{filter_meta_2}</h6>
+                                <h6>{filter_meta_3}</h6>
+                                <p class="card-text">{context}</p>
+                                {pdf_html}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                cols = ['Doc_Page_ID','เรื่อง','Original_text']
+                csv = convert_df(res_df[cols])
+
+        with c22:
+            st.markdown("""Remark:\n- Scroll เพื่อซุมเข้าออก\n- Click เพื่อเลื่อน""")
+            markdown_text = "### List of Documents"
+            for index, row in doc_df.iterrows():
+                markdown_text = markdown_text + """\n[{}: {}](http://pc140032646.bot.or.th/th_pdf/{})\n""".format(row['Doc_ID'], row['เรื่อง'], row['File_Code'])
+            st.markdown(markdown_text)
+
+        if 'max_page' not in st.session_state:
+            st.session_state['max_page'] = 10
+        c41, c42 = st.columns((14, 6))
+        with c41:
+            st.markdown("<div id='linkto_bottom'></div>", unsafe_allow_html=True)
+            if int(st.session_state['max_page']) > 1:
+                page = st.slider('Page No:', 1, int(st.session_state['max_page']), key = 'page')
+            st.download_button(
+                label="Download search results as CSV",
+                data=csv,
+                file_name=f"{sentence_query}_results.csv",
+                mime='text/csv',
+            )
+            st.markdown("<a href='#linkto_top'>Link to top</a>", unsafe_allow_html=True)
+        # except:
+        #     st.markdown("## ไม่พบข้อความที่ค้นหา")
+        #     pass
 
 elif 'code_id' in get_params:
     code_id = get_params['code_id'][0]

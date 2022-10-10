@@ -36,6 +36,10 @@ class ria:
         self.Doc_Page_Text_2 = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
         self.Doc_Page_Sentence_2 = pd.read_csv('09_Output_Streamlib/Doc_Page_Sentence.csv')
         
+        self.filter1_selected = list()
+        self.filter2_selected = list()
+        self.filter3_selected = list()
+        
     def highlight_text(self, query_sentence, text):
         if all([True if or_token in query_sentence else False  for or_token in ['(','หรือ',')']]):
             query_sentence = query_sentence.replace('(','')
@@ -194,12 +198,9 @@ class ria:
             return 0
 
     def filter_result_search(self,Result_search):
-        filter1_selected = self.filter1_selected
-        filter2_selected = self.filter2_selected
-        filter3_selected = self.filter3_selected
         Result_search["Check"] = Result_search.apply(self.filter_col,
                                                      args=(['สถาบันผู้เกี่ยวข้อง','ประเภทเอกสาร','กฎหมาย'],
-                                                           [filter1_selected,filter2_selected,filter3_selected]),
+                                                           [self.filter1_selected,self.filter2_selected,self.filter3_selected]),
                                                      axis=1)
         Result_search = Result_search[Result_search['Check'] == 1].copy()
         Result_search = Result_search.drop(columns=['Check'])
@@ -244,6 +245,11 @@ class ria:
         
     def retrieval_score(self, document):
         query = self.query
+        #update 20221006 exect_match
+        if '"' in query:
+            query = query.replace('"','')
+            retrieval = len(list(re.finditer(query, document)))
+            return retrieval
         query_list = self.create_query_list(query)
         df = pd.DataFrame()
         candidate_df = pd.DataFrame()
@@ -368,15 +374,17 @@ class ria:
         G = Network(height='500px', width='100%',bgcolor="#f2f2f2")  #222222
 
         for Doc_ID in df_dict_pair_filter_no_pair['Q_Doc_ID'].unique():
+            thai_name_doc = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เลขที่ (Thai)'].iloc[0]
             Doc_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
-            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='dot',size =30) #circle
+            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='dot',size =30) #circle
 
         for Doc_ID in all_node:
             Doc_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
     #         Doc_ID_Name_len = len(Doc_Name)
     #         if Doc_ID_Name_len > 100:
     #             Doc_Name = Doc_Name[:round(Doc_ID_Name_len/2)]+'\n'+Doc_Name[round(Doc_ID_Name_len/2):]
-            G.add_node(Doc_ID,title=["ประกาศหลัก:"+'\n'+Doc_ID+' :'+Doc_Name],shape='dot',size =30)
+            thai_name_doc = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เลขที่ (Thai)'].iloc[0]
+            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='circle')
         try:
             for Q_Doc_ID in all_pair_Doc_id_group['Q_Doc_ID'].unique():
                 Number_connect_nodes = len(all_pair_Doc_id_group[all_pair_Doc_id_group['Q_Doc_ID'] == Q_Doc_ID])
@@ -394,8 +402,9 @@ class ria:
                     node['title'][0] += '\n\n ประกาศที่เกี่ยวข้อง:\n'
                 #print(node,node['size'])
                 for Doc_ID in neighbor_map[node['id']]:
+                    thai_name_doc = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เลขที่ (Thai)'].iloc[0]
                     Doc_ID_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
-                    node['title'][0] += f' {Doc_ID} :'+Doc_ID_Name+ '\n'
+                    node['title'][0] += f' {thai_name_doc} :'+Doc_ID_Name+ '\n'
         except:
             pass
     #     "border": "rgba(34, 42, 89,1)",
