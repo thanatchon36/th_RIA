@@ -35,6 +35,7 @@ class ria:
         self.Data_Dictionary_streamlib_2 = pd.read_csv('09_Output_Streamlib/Data_Dictionary_streamlib.csv',dtype=str)
         self.Doc_Page_Text_2 = pd.read_csv('09_Output_Streamlib/P_One_Doc_Page_Text.csv')
         self.Doc_Page_Sentence_2 = pd.read_csv('09_Output_Streamlib/Doc_Page_Sentence.csv')
+        self.df_meta_question_answer = pd.read_csv('09_Output_Streamlib/df_meta_question_answer.csv')
         
         self.filter1_selected = list()
         self.filter2_selected = list()
@@ -376,7 +377,7 @@ class ria:
         for Doc_ID in df_dict_pair_filter_no_pair['Q_Doc_ID'].unique():
             thai_name_doc = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เลขที่ (Thai)'].iloc[0]
             Doc_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
-            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='dot',size =30) #circle
+            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='dot') #circle
 
         for Doc_ID in all_node:
             Doc_Name = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เรื่อง'].iloc[0]
@@ -384,7 +385,7 @@ class ria:
     #         if Doc_ID_Name_len > 100:
     #             Doc_Name = Doc_Name[:round(Doc_ID_Name_len/2)]+'\n'+Doc_Name[round(Doc_ID_Name_len/2):]
             thai_name_doc = Data_Dictionary_streamlib[Data_Dictionary_streamlib['Doc_ID'] == Doc_ID]['เลขที่ (Thai)'].iloc[0]
-            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='circle')
+            G.add_node(Doc_ID,label=thai_name_doc,title=["ประกาศหลัก:"+'\n'+thai_name_doc+' :'+Doc_Name],shape='dot')
         try:
             for Q_Doc_ID in all_pair_Doc_id_group['Q_Doc_ID'].unique():
                 Number_connect_nodes = len(all_pair_Doc_id_group[all_pair_Doc_id_group['Q_Doc_ID'] == Q_Doc_ID])

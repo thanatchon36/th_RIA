@@ -264,12 +264,13 @@ if get_params == {}:
                     filter_meta_2 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
                     filter_meta_3 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
                     doc_no = 'ประกาศเลขที่: {}'.format(filter_res_df['เลขที่ (Thai)'].values[i])
+                    
                     if filter_res_df['Number_result'].values[i] > 0:
                         source = doc_meta.replace('|','|Page') + ' (Click to See This Page)'
                         st.markdown(f"""
                         <div class="card" style="margin:1rem;">
                             <div class="card-body">
-                                <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={source.split(' ')[0]}" class="card-link">{source}</a></h5>
+                                <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={filter_res_df['Doc_Page_ID'].values[i]}" class="card-link">{source}</a></h5>
                                 <h6>{doc_no}</h6>
                                 <h6>{doc_meta_2}</h6>
                                 <h6>{filter_meta}</h6>
