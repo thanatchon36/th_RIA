@@ -363,7 +363,7 @@ elif 'code_id' in get_params:
         page_id = "Page" + part_two_df['R_Page_ID'].values[index] + ' Sentence'  + part_two_df['R_Sen_ID'].values[index]
         result_sentence = part_two_df['result_Sentence_show'].values[index]
         pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
-        right_title = doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index]
+        right_title = doc_id + ' ' + part_two_df['R_เรื่อง'].values[index]
         right_sen = conv.convert(result_sentence)
         right_page_id = page_id
         right_pdf = pdf_html

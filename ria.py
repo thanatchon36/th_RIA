@@ -41,37 +41,60 @@ class ria:
         self.filter2_selected = list()
         self.filter3_selected = list()
         
-    def highlight_text(self, query_sentence, text):
-        if all([True if or_token in query_sentence else False  for or_token in ['(','หรือ',')']]):
+    #0
+    def create_query_token_for_highlight(self,query):
+        query_token = word_tokenize(query)
+        stopwords = list(thai_stopwords())
+        query_token_list = dict()
+        query_token_stopwords = dict()
+        stick_stopword = ''
+        index = 0
+        for i in query_token:
+            if i not in stopwords:
+                query_token_list[index] = i
+                if len(stick_stopword) != 0:
+                    query_token_stopwords[index] = stick_stopword
+                    stick_stopword = ''
+                index += 1
+            else:
+                stick_stopword += i
+                #print(stick_stopword)
+
+        return query_token_list,query_token_stopwords
+
+    def creat_df_to_dict_for_highlight(self,df):
+        df_dict = df.drop(columns=['score']).to_dict('records')
+        new_dict = dict()
+        for index_dict in df_dict:
+            for key in index_dict.keys():
+                new_dict[index_dict[key]] = key
+        return new_dict
+
+    def highlight_text(self, query_sentence, document):
+        if all([True if or_token in query_sentence else False  for or_token in ['(','หรือ',')','"']]):
             query_sentence = query_sentence.replace('(','')
             query_sentence = query_sentence.replace('หรือ','')
             query_sentence = query_sentence.replace(')','')
-            
-        query_token_list = word_tokenize(query_sentence)
-        new_query_token_list = []
-        new_token = ''
-        for index, token in enumerate(query_token_list):
-            if token in thai_stopwords():
-                new_token += token
-            elif re.search(r'([a-z])',token) != None:
-                new_query_token_list.append(token.upper())
-                new_query_token_list.append(token.lower())
-                new_query_token_list.append(token[0].upper()+token[1:].lower())
-            else:
-                new_token += token
-                new_query_token_list.append(new_token)
-                new_query_token_list.append(token)
-                new_token = ''
-                
-        token_list_to_replace = list(dict.fromkeys(new_query_token_list))
-        sorted_list = sorted(token_list_to_replace, key=len,reverse=True)
-        for index,new_token in enumerate(sorted_list):
-            if new_token != ' ':
-                text = text.replace(new_token,f'|{index}|')
-        for index,new_token in enumerate(sorted_list):
-            if new_token != ' ':
-                text = text.replace(f'|{index}|',f'<mark style="background-color:yellow;">{new_token}</mark>')
-        return text
+            query_sentence = query_sentence.replace('"','')
+            #if exact_match_use_other
+        query_token_list,query_token_stopwords = self.create_query_token_for_highlight(query_sentence)
+        df,candidate_df = self.find_min_location_token(document,query_token_list.values())
+        df_dict = df.drop(columns=['score']).to_dict('records')
+        new_dict = self.creat_df_to_dict_for_highlight(df)
+        new_dict_keys_sorted = sorted(new_dict,reverse=True)
+
+        for location in new_dict_keys_sorted:
+            word_index_in_query_token_list = new_dict[location]
+            len_token = len(query_token_list[word_index_in_query_token_list])
+            replace_word_start = location-len_token
+            replace_word_end = location
+            if word_index_in_query_token_list in query_token_stopwords.keys():
+                len_stop_word = len(query_token_stopwords[word_index_in_query_token_list])
+                if document[replace_word_start-len_stop_word:replace_word_start] == query_token_stopwords[word_index_in_query_token_list]:
+                    replace_word_start = replace_word_start-len_stop_word
+            document = document[:replace_word_end] + '</mark>' + document[replace_word_end:]
+            document = document[:replace_word_start] + f'<mark style="background-color:yellow;margin: 0;padding: 0;">' + document[replace_word_start:]
+        return document
         
     def step3_2_click_show_result(self, query_sentence,compare_sentence):    
         query_sentence = self.create_query_token_for_compair(query_sentence.replace('\n',''))
