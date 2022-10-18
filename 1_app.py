@@ -523,7 +523,7 @@ elif 'qa' in get_params:
         # st.markdown(st.session_state['filter_1'])
         # st.markdown(st.session_state['filter_2'])
         app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
-        res_df_02 = reset(app.filter_result_search(res_df_01))
+        # res_df_02 = reset(app.filter_result_search(res_df_01))
 
         # res_df_02 = res_df_01.copy()
         res_df_02 = reset(res_df_02.sort_values(by=['answer_score'], ascending = False))
