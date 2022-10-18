@@ -494,7 +494,7 @@ elif 'qa' in get_params:
         ori_res_df['start'] = start_list
         ori_res_df['end'] = end_list
 
-        ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
+        # ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
 
         if show_result_type == 'Distinct Documents':
             res_df_01 = ori_res_df.copy()
@@ -559,61 +559,61 @@ elif 'qa' in get_params:
                     content = content.replace(highlight_text, f"""<mark style="background-color:yellow;">{highlight_text}</mark>""")
 
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
-                    if filter_res_df['Number_result'].values[i] > 0:
-                        row_1 = 'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)'
-                        row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
-                        row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
-                        row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
-                        row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
-                        row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
-                        row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
-                        content = '...{}...'.format(content)
-                        answer = 'คำตอบ: {}'.format(answer)
+                    # if filter_res_df['Number_result'].values[i] > 0:
+                    row_1 = 'Doc' + doc_meta.replace('|','|Page') + ' (Click to See This Page)'
+                    row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
+                    row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
+                    row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
+                    row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
+                    row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
+                    row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
+                    content = '...{}...'.format(content)
+                    answer = 'คำตอบ: {}'.format(answer)
 
-                        st.markdown(f"""
-                        <div class="card" style="margin:1rem;">
-                            <div class="card-body">
-                                <h6>{answer}</h6>
-                                <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={row_1.split(' ')[0]}" class="card-link">{row_1}</a></h5>
-                                <h6>{row_2}</h6>
-                                <h6>{row_3}</h6>
-                                <h6>{row_4}</h6>
-                                <h6>{row_5}</h6>
-                                <h6>{row_6}</h6>
-                                <h6>{row_7}</h6>
-                                <p class="card-text">{content}</p>
-                                {pdf_html}
-                            </div>
+                    st.markdown(f"""
+                    <div class="card" style="margin:1rem;">
+                        <div class="card-body">
+                            <h6>{answer}</h6>
+                            <h5 class="card-title"><a href="http://pc140032646.bot.or.th/th_ria?code_id={row_1.split(' ')[0]}" class="card-link">{row_1}</a></h5>
+                            <h6>{row_2}</h6>
+                            <h6>{row_3}</h6>
+                            <h6>{row_4}</h6>
+                            <h6>{row_5}</h6>
+                            <h6>{row_6}</h6>
+                            <h6>{row_7}</h6>
+                            <p class="card-text">{content}</p>
+                            {pdf_html}
                         </div>
-                        """, unsafe_allow_html=True)
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                    else:
-                        row_1 = 'Doc' + doc_meta.replace('|','|Page')
-                        row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
-                        row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
-                        row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
-                        row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
-                        row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
-                        row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
-                        content = '...{}...'.format(content)
-                        answer = 'คำตอบ: {}'.format(answer)
+                    # else:
+                    #     row_1 = 'Doc' + doc_meta.replace('|','|Page')
+                    #     row_2 = 'Document ID: {} '.format(doc_meta.split('|')[0]) + doc_name
+                    #     row_3 = 'Page ID: {}'.format(doc_meta.split('|')[1])
+                    #     row_4 = 'สถาบันผู้เกี่ยวข้อง: ' + ' | '.join(filter_res_df['สถาบันผู้เกี่ยวข้อง'].values[i])
+                    #     row_5 = 'ประเภทเอกสาร: ' + ' | '.join(filter_res_df['ประเภทเอกสาร'].values[i])
+                    #     row_6 = 'กฎหมายที่เกี่ยวข้อง: ' + ' | '.join(filter_res_df['กฎหมาย'].values[i])
+                    #     row_7 = 'Score: {}'.format(filter_res_df['answer_score'].values[i])
+                    #     content = '...{}...'.format(content)
+                    #     answer = 'คำตอบ: {}'.format(answer)
 
-                        st.markdown(f"""
-                        <div class="card" style="margin:1rem;">
-                            <div class="card-body">
-                                <h6>{answer}</h6>
-                                <h5 class="card-title">{row_1}</h5>
-                                <h6>{row_2}</h6>
-                                <h6>{row_3}</h6>
-                                <h6>{row_4}</h6>
-                                <h6>{row_5}</h6>
-                                <h6>{row_6}</h6>
-                                <h6>{row_7}</h6>
-                                <p class="card-text">{content}</p>
-                                {pdf_html}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                    #     st.markdown(f"""
+                    #     <div class="card" style="margin:1rem;">
+                    #         <div class="card-body">
+                    #             <h6>{answer}</h6>
+                    #             <h5 class="card-title">{row_1}</h5>
+                    #             <h6>{row_2}</h6>
+                    #             <h6>{row_3}</h6>
+                    #             <h6>{row_4}</h6>
+                    #             <h6>{row_5}</h6>
+                    #             <h6>{row_6}</h6>
+                    #             <h6>{row_7}</h6>
+                    #             <p class="card-text">{content}</p>
+                    #             {pdf_html}
+                    #         </div>
+                    #     </div>
+                    #     """, unsafe_allow_html=True)
                 cols = ['Doc_Page_ID','เรื่อง','Original_text']
                 csv = convert_df(res_df[cols])
 
