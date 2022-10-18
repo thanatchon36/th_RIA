@@ -32,7 +32,13 @@ from statistics import mode, StatisticsError
 from ria import ria
 from ast import literal_eval
 
-app = ria()
+# TFIDF Ranking
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from pythainlp.tokenize import word_tokenize
+from string import punctuation
+import numpy as np
 
 def reset(df):
     cols = df.columns
@@ -76,6 +82,39 @@ def canonicalize(string):
                 normalized_tokens.append(token)
                 pass
     return normalized_tokens
+
+def query(query_text, vectorizer, document_matrix, df):
+    
+    # Transform our string using the vocabulary
+    transformed = vectorizer.transform([query_text])
+    query = transformed[0:1]
+
+    np_result = np.array(find_similar(query, document_matrix, len(df)))
+
+    mask = np_result[:, 1] > 0 
+
+    np_result = np_result[mask, :]
+        
+    index_list = []
+    score_list = []
+    df_dict = {'index': index_list, 'score': score_list}
+
+    df_dict['index'] =  np_result[:,0]
+    df_dict['score'] =  np_result[:,1]
+
+    df = pd.DataFrame(df_dict)
+    df['index'] = df['index'].astype(int)
+    df = df.set_index('index')
+    
+    return reset(pd.merge(df, data, left_index=True, right_index=True, how ='left'))
+
+
+# A function that given an input query item returns the top-k most similar items 
+# by their cosine similarity.
+def find_similar(query_vector, td_matrix, top_k = 5):
+    cosine_similarities = cosine_similarity(query_vector, td_matrix).flatten()
+    related_doc_indices = cosine_similarities.argsort()[::-1]
+    return [(index, cosine_similarities[index]) for index in related_doc_indices][0:top_k]
 
 st.set_page_config(layout="wide", page_title = 'RIA', page_icon = 'fav.png')
 st.markdown(
@@ -148,6 +187,16 @@ def get_answer(sentence_query, context_list):
                         json = json_params
                     )
     return res.json()
+
+app = ria()
+data = app.df_meta_question_answer.copy()
+with open('09_Output_Streamlib/tfidf_vectorizer.pickle', 'rb') as handle:
+    tfidf_vectorizer = pickle.load(handle)
+with open('09_Output_Streamlib/tfidf_term_document_matrix.pickle', 'rb') as handle:
+    tfidf_term_document_matrix = pickle.load(handle)
+
+
+
 
 get_params = st.experimental_get_query_params()
 # st.markdown(get_params)
@@ -428,16 +477,22 @@ elif 'qa' in get_params:
 
         app.query = sentence_query
 
-        # try:
-        ori_res_df = app.step1_user_search()
+        query_text = sentence_query
+        ori_res_df = query(query_text, tfidf_vectorizer, tfidf_term_document_matrix, data)
+        ori_res_df = ori_res_df.head(100)
+        # st.dataframe(ori_res_df)
 
         with st.spinner("QA Processing..."):
             res_list = get_answer(sentence_query, list(ori_res_df['Original_text'].values))
 
         score_list = [each['score'] for each in res_list]
         ans_list = [each['answer'] for each in res_list]
+        start_list = [each['start'] for each in res_list]
+        end_list = [each['end'] for each in res_list]
         ori_res_df['answer'] = ans_list
         ori_res_df['answer_score'] = score_list
+        ori_res_df['start'] = start_list
+        ori_res_df['end'] = end_list
 
         ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
 
@@ -500,11 +555,8 @@ elif 'qa' in get_params:
 
                     answer = filter_res_df['answer'].values[i]
                     answer_score = filter_res_df['answer_score'].values[i]
-                    answer_space_list = answer.split(' ')
-                    answer_space_list = Sorting(answer_space_list)
-                    answer_space_list = [answer_space_list[0]]
-                    for answer_space in answer_space_list:
-                        content = content.replace(answer_space, f"""<mark style="background-color:yellow;">{answer_space}</mark>""")
+                    highlight_text = filter_res_df['Original_text'].values[i][filter_res_df['start'].values[i]:filter_res_df['end'].values[i]]
+                    content = content.replace(highlight_text, f"""<mark style="background-color:yellow;">{highlight_text}</mark>""")
 
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                     if filter_res_df['Number_result'].values[i] > 0:
