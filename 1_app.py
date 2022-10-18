@@ -499,7 +499,7 @@ elif 'qa' in get_params:
         if show_result_type == 'Distinct Documents':
             res_df_01 = ori_res_df.copy()
             res_df_01 = res_df_01.groupby('Doc_ID').first().reset_index()
-            res_df_01 = reset(res_df_01.sort_values(by = 'Score', ascending = False))
+            res_df_01 = reset(res_df_01.sort_values(by = 'answer_score', ascending = False))
         else:
             res_df_01 = ori_res_df.copy()
 
