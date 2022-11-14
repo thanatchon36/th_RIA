@@ -168,6 +168,44 @@ def card_4(source, context, pdf_html, doc_meta):
         </div>
     """, unsafe_allow_html=True)
 
+def filter_col(row,row_names,selected_filter_lists):
+        result_each_col = []
+        y = []
+        count_filter = 0
+        #กรณีไม่มี Filter ก็แสดงหมด
+        if len(selected_filter_lists[0]) + len(selected_filter_lists[1]) + len(selected_filter_lists[2]) == 0:
+            return 1
+        else:
+            for row_number in range(len(row_names)):
+                row_name = row_names[row_number]
+                selected_filter_list = selected_filter_lists[row_number]
+                if len(selected_filter_list) == 0:
+                        continue
+                for i in selected_filter_list:
+                    try:
+                        data_in_row = ast.literal_eval(row[row_name])
+                    except:
+                        data_in_row = row[row_name]
+                        pass
+                    if i.replace(' ','') in [j.replace(' ','') for j in data_in_row]:
+                        result_each_col.append(True)
+                    else:
+                        result_each_col.append(False)
+                    count_filter += 1
+            if sum(result_each_col) == count_filter:
+                return 1
+            else:
+                return 0
+def filter_result_search(filter1_selected, filter2_selected, filter3_selected, Result_search):
+    Result_search["Check"] = Result_search.apply(filter_col,
+                                                 args=(['สถาบันผู้เกี่ยวข้อง','ประเภทเอกสาร','กฎหมาย'],
+                                                       [filter1_selected,filter2_selected,filter3_selected]),
+                                                 axis=1)
+    Result_search = Result_search[Result_search['Check'] == 1].copy()
+    Result_search = Result_search.drop(columns=['Check'])
+    Result_search = Result_search.sort_values(by=['Score'], ascending=False).reset_index(drop=True)
+    return Result_search
+
 # @st.cache(suppress_st_warning=True)
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def draw_network(HtmlFile):
@@ -194,8 +232,6 @@ with open('09_Output_Streamlib/tfidf_vectorizer.pickle', 'rb') as handle:
     tfidf_vectorizer = pickle.load(handle)
 with open('09_Output_Streamlib/tfidf_term_document_matrix.pickle', 'rb') as handle:
     tfidf_term_document_matrix = pickle.load(handle)
-
-
 
 
 get_params = st.experimental_get_query_params()
@@ -236,21 +272,32 @@ if get_params == {}:
         if 'page' not in st.session_state:
             st.session_state['page'] = 1
 
-        app.query = sentence_query
+        # app.query = sentence_query
 
         # try:
-        ori_res_df = app.step1_user_search()
-        ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
+        # ori_res_df = app.step1_user_search()
+        url_query = 'http://127.0.0.1:6102/ria_query'
+        post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
+        post_query = requests.post(url_query,json= post_query_para)
+        ori_res_df = pd.DataFrame(post_query.json()['Result_search']) #dataframe
+        html_graph = post_query.json()['Network_Graph']
+        option_filter = post_query.json()['option_filter']
+        filter1_from_result = option_filter['filter1_from_result']
+        filter2_from_result = option_filter['filter2_from_result']
+        filter3_from_result = option_filter['filter3_from_result']
+        # st.dataframe(ori_res_df)
 
+        ori_res_df['Number_result'] = ori_res_df['Number_result'].fillna(-1)
+        
         if show_result_type == 'Distinct Documents':
             res_df_01 = ori_res_df.copy()
             res_df_01 = res_df_01.groupby('Doc_ID').first().reset_index()
-            resres_df_01_df = reset(res_df_01.sort_values(by = 'Score', ascending = False))
+            res_df_01 = reset(res_df_01.sort_values(by = 'Score', ascending = False))
         else:
             res_df_01 = ori_res_df.copy()
 
         with c13:
-            filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
+            # filter1_from_result, filter2_from_result, filter3_from_result = app.option_filter(res_df_01)
             filter_1 = st.multiselect(
                 'สถาบันการเงินผู้เกี่ยวข้อง:',
                 options = filter1_from_result,
@@ -265,14 +312,17 @@ if get_params == {}:
                 default = [],
                 key = 'filter_2',
             )
-        app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
-        res_df_02 = reset(app.filter_result_search(res_df_01))
+            
+        # app.filter1_selected, app.filter2_selected, app.filter3_selected = st.session_state['filter_1'], st.session_state['filter_2'], []
+        res_df_02 = filter_result_search(st.session_state['filter_1'], st.session_state['filter_2'], [], res_df_01)
+
         try:
             with st.spinner("Loading..."):
-                G = app.create_network(res_df_02)
-                G.show('nx.html')
-                HtmlFile = open('nx.html','r',encoding='utf-8')
-                draw_network(HtmlFile)
+                # G = app.create_network(res_df_02)
+                # G.show('nx.html')
+                # HtmlFile = open('nx.html','r',encoding='utf-8')
+                # draw_network(HtmlFile)
+                draw_network(html_graph)
                 st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
         except StatisticsError:
             pass
@@ -377,7 +427,12 @@ if get_params == {}:
 elif 'code_id' in get_params:
     code_id = get_params['code_id'][0]
     doc_meta = code_id.replace('Doc','').replace('Page','')
-    part_one_df = app.part_one_show_original_text(doc_meta)
+    # part_one_df = app.part_one_show_original_text(doc_meta)
+    # st.dataframe(part_one_df)
+
+    url_compare = 'http://127.0.0.1:6102/ria_compare'
+    post_compare = requests.post(url_compare,json= {'Doc_Page_ID':doc_meta})
+    part_one_df = pd.DataFrame(post_compare.json()['Result_original'])
 
     doc_name = part_one_df['เรื่อง'].values[0]
     content = part_one_df['Original_text'].values[0]
@@ -394,8 +449,9 @@ elif 'code_id' in get_params:
         # 'ทด',
     )
 
-    part_two_df = app.part_two_show_compare(doc_meta)
+    # part_two_df = app.part_two_show_compare(doc_meta)
     # st.dataframe(part_two_df)
+    part_two_df = pd.DataFrame(post_compare.json()['Result_compare'])
 
     st.markdown("<br>", unsafe_allow_html=True)
     for index in range(len(part_two_df)):
