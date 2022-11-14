@@ -322,7 +322,10 @@ if get_params == {}:
                 # G.show('nx.html')
                 # HtmlFile = open('nx.html','r',encoding='utf-8')
                 # draw_network(HtmlFile)
-                draw_network(html_graph)
+                with open('nx.html','w') as f:
+                    f.write(html_graph)
+                HtmlFile = open('nx.html','r',encoding='utf-8')
+                draw_network(HtmlFile)
                 st.markdown("""<div align="center"><h3>ความเชื่อมโยงประกาศ</h3></div>""", unsafe_allow_html=True)
         except StatisticsError:
             pass
