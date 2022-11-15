@@ -440,7 +440,7 @@ elif 'code_id' in get_params:
 
     doc_name = part_one_df['เรื่อง'].values[0]
     content = part_one_df['Original_text'].values[0]
-    file_name = part_one_df['File_Name'].values[0]
+    file_name = part_one_df['File_Code'].values[0]
 
     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(file_name)
     card_2(
