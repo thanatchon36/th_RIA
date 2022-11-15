@@ -207,6 +207,13 @@ def filter_result_search(filter1_selected, filter2_selected, filter3_selected, R
     Result_search = Result_search.sort_values(by=['Score'], ascending=False).reset_index(drop=True)
     return Result_search
 
+@st.cache(allow_output_mutation=True)
+def get_ria_query(sentence_query):
+    url_query = 'http://127.0.0.1:6102/ria_query'
+    post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
+    post_query = requests.post(url_query,json= post_query_para)
+    return post_query
+
 # @st.cache(suppress_st_warning=True)
 @st.cache(allow_output_mutation=True, suppress_st_warning=True)
 def draw_network(HtmlFile):
@@ -216,7 +223,6 @@ def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     # return df.to_csv().encode('utf-8')
     return df.to_csv(index = False).encode('utf-8-sig')
-
 @st.cache(allow_output_mutation=True)
 def get_answer(sentence_query, context_list):
     json_params = {}
@@ -277,9 +283,7 @@ if get_params == {}:
 
         # try:
         # ori_res_df = app.step1_user_search()
-        url_query = 'http://127.0.0.1:6102/ria_query'
-        post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
-        post_query = requests.post(url_query,json= post_query_para)
+        post_query = get_ria_query(sentence_query)
         ori_res_df = pd.DataFrame(post_query.json()['Result_search']) #dataframe
         html_graph = post_query.json()['Network_Graph']
         option_filter = post_query.json()['option_filter']
