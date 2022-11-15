@@ -140,11 +140,12 @@ def link_card(id_val, source, context, pdf_html, doc_meta, doc_meta_2,filter_met
     </div>
     """, unsafe_allow_html=True)
 
-def card_2(source, source_2, context, pdf_html):
+def card_2(source, source_2, context, pdf_html, doc_no):
 # def card_2(source, source_2, context, pdf_html,filter_meta,filter_meta_2,filter_meta_3):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
+            <h3 class="card-title">{doc_no}</h3>
             <h3 class="card-title">{source}</h3>
             <h3 class="card-title">{source_2}</h3>
             <h3 class="card-title">เนื้อหา</h3>
@@ -439,7 +440,7 @@ elif 'code_id' in get_params:
 
     doc_name = part_one_df['เรื่อง'].values[0]
     content = part_one_df['Original_text'].values[0]
-    file_name = app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == doc_meta.split('|')[0].replace('Doc','')]['File_Code'].values[0]
+    file_name = part_one_df['File_Name'].values[0]
 
     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(file_name)
     card_2(
@@ -447,6 +448,7 @@ elif 'code_id' in get_params:
         'Page{}'.format(doc_meta.split('|')[1]),
         '...{}...'.format(content),
         pdf_html,
+        'ประกาศเลขที่: {}'.format(part_one_df['เลขที่ (Thai)'].values[0])
         # 'ทด',
         # 'ทด',
         # 'ทด',
@@ -461,26 +463,29 @@ elif 'code_id' in get_params:
         doc_id = 'Doc' + part_two_df['Q_Doc_ID'].values[index]
         page_id = "Page" + part_two_df['Q_Page_ID'].values[index] + ' Sentence'  + part_two_df['Q_Sen_ID'].values[index]
         result_sentence = part_two_df['query_Sentence_show'].values[index]
-        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['Q_Doc_ID'].values[index]]['File_Code'].values[0])
+        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(part_two_df['Q_File_Code'].values[index])
         left_title = doc_id + ' ' + part_two_df['Q_เรื่อง'].values[index]
         left_sen = conv.convert(result_sentence)
         left_page_id = page_id
         left_pdf = pdf_html
+        left_doc_no = "ประกาศเลขที่: {}".format(part_two_df['Q_เลขที่ (Thai)'].values[index])
 
         doc_id = 'Doc' + part_two_df['R_Doc_ID'].values[index]
         page_id = "Page" + part_two_df['R_Page_ID'].values[index] + ' Sentence'  + part_two_df['R_Sen_ID'].values[index]
         result_sentence = part_two_df['result_Sentence_show'].values[index]
-        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(app.Data_Dictionary_streamlib_0[app.Data_Dictionary_streamlib_0['Doc_ID'] == part_two_df['R_Doc_ID'].values[index]]['File_Code'].values[0])
+        pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a>""".format(part_two_df['R_File_Code'].values[index])
         right_title = doc_id + ' ' + part_two_df['R_เรื่อง'].values[index]
         right_sen = conv.convert(result_sentence)
         right_page_id = page_id
         right_pdf = pdf_html
+        right_doc_no = "ประกาศเลขที่: {}".format(part_two_df['R_เลขที่ (Thai)'].values[index])
 
         st.markdown(f""" 
             <div class="card-deck">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{left_title}</h5>
+                        <h6>{left_doc_no}</h6>
                         <h6>{left_page_id}</h6>
                         <p class="card-text">{left_sen}</p>
                         {left_pdf}
@@ -489,6 +494,7 @@ elif 'code_id' in get_params:
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{right_title}</h5>
+                        <h6>{right_doc_no}</h6>
                         <h6>{right_page_id}</h6>
                         <p class="card-text">{right_sen}</p>
                         {right_pdf}
