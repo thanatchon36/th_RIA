@@ -145,8 +145,8 @@ def card_2(source, source_2, context, pdf_html, doc_no):
     st.markdown(f"""
     <div class="card" style="margin:1rem;">
         <div class="card-body">
-            <h3 class="card-title">{doc_no}</h3>
             <h3 class="card-title">{source}</h3>
+            <h3 class="card-title">{doc_no}</h3>
             <h3 class="card-title">{source_2}</h3>
             <h3 class="card-title">เนื้อหา</h3>
             <p class="card-text">{context}</p>
