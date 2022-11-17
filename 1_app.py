@@ -361,7 +361,7 @@ if get_params == {}:
                     content = filter_res_df['Original_text'].values[i]
                     doc_name = filter_res_df['เรื่อง'].values[i]
                     doc_meta = filter_res_df['Doc_Page_ID'].values[i]
-                    content = app.highlight_text(sentence_query, content)
+                    # content = app.highlight_text(sentence_query, content)
                     pdf_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">PDF</a> <a href='#linkto_top' class="card-link">Link to top</a> <a href='#linkto_bottom' class="card-link">Link to bottom</a>""".format(filter_res_df['File_Code'].values[i])
                     
                     context = '...{}...'.format(content)
