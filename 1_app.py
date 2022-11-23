@@ -207,7 +207,7 @@ def filter_result_search(filter1_selected, filter2_selected, filter3_selected, R
     Result_search = Result_search.sort_values(by=['Score'], ascending=False).reset_index(drop=True)
     return Result_search
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def get_ria_query(sentence_query):
     url_query = 'http://127.0.0.1:6102/ria_query'
     post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
@@ -358,7 +358,7 @@ if get_params == {}:
                 # st.dataframe(filter_res_df)
 
                 for i in range(len(filter_res_df)):
-                    content = filter_res_df['Original_text'].values[i]
+                    content = filter_res_df['Original_text_highlight'].values[i]
                     doc_name = filter_res_df['เรื่อง'].values[i]
                     doc_meta = filter_res_df['Doc_Page_ID'].values[i]
                     # content = app.highlight_text(sentence_query, content)
@@ -404,7 +404,7 @@ if get_params == {}:
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
-                cols = ['Doc_Page_ID','เรื่อง','Original_text']
+                cols = ['Doc_Page_ID','เรื่อง','Original_text','สถาบันผู้เกี่ยวข้อง','ประเภทเอกสาร','กฎหมาย','เลขที่ (Thai)']
                 csv = convert_df(res_df[cols])
 
         with c22:
