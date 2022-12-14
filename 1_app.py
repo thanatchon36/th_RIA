@@ -207,7 +207,7 @@ def filter_result_search(filter1_selected, filter2_selected, filter3_selected, R
     Result_search = Result_search.sort_values(by=['Score'], ascending=False).reset_index(drop=True)
     return Result_search
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def get_ria_query(sentence_query):
     url_query = 'http://127.0.0.1:6102/ria_query'
     post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
