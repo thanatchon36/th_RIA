@@ -215,7 +215,7 @@ def get_ria_query(sentence_query):
     return post_query
 
 def get_ria_query_dev(sentence_query):
-    url_query = 'http://127.0.0.1:6102/ria_query_dev'
+    url_query = 'http://127.0.0.1:6109/ria_query_dev'
     post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
     post_query = requests.post(url_query,json= post_query_para)
     return post_query
@@ -711,7 +711,7 @@ elif 'code_id' in get_params and 'dev_flag' in get_params and len(get_params) ==
     code_id = get_params['code_id'][0]
     doc_meta = code_id.replace('Doc','').replace('Page','')
 
-    url_compare = 'http://127.0.0.1:6102/ria_compare_dev'
+    url_compare = 'http://127.0.0.1:6109/ria_compare_dev'
     post_compare = requests.post(url_compare,json= {'Doc_Page_ID':doc_meta})
     part_one_df = pd.DataFrame(post_compare.json()['Result_original'])
 
