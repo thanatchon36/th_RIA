@@ -262,7 +262,7 @@ if 'dev_flag' not in get_params and len(get_params) == 0:
 - “หรือ” เป็นการค้นหาเอกสารที่มีอย่างน้อย 1 คำในเอกสาร วิธีการค้นหา (keyword1 หรือ keyword2) เช่น (ความเสี่ยงด้านเครดิต หรือ ความเสี่ยงด้านปฏิบัติการ)
 - การใช้ quotes ("") ใช้เพื่อค้นหาคำหรือประโยคแบบ exact วิธีการค้นหา “keyword” เช่น "คณะกรรมการสถาบันการเงิน" (สามารถค้นหาได้หลายคำหรือประโยคโดยการเว้นวรรคระหว่างคำ เช่น "คณะกรรมการสถาบันการเงิน" "ดูแลให้มี")""")
         
-        manual_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">Manual for RIA Tutorial</a>""".format("ria_manual.pdf")
+        manual_html = """<a href="http://pc140032646.bot.or.th/th_pdf/{}" class="card-link">Application Manual</a>""".format("ria_manual.pdf")
         st.markdown(manual_html, unsafe_allow_html=True)
 
         query_params = st.experimental_get_query_params()
