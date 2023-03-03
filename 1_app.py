@@ -253,7 +253,7 @@ get_params = st.experimental_get_query_params()
 if 'dev_flag' not in get_params and len(get_params) == 0:
 # if get_params == {}:
     st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
-    st.write("""# RIA Live Demo""")
+    st.write("""# RIA Tool""")
     c11, c12, c13, c14 = st.columns((6, 2, 4, 4))
     with c11:
         sentence_query = st.text_input('ใส่ข้อความเพื่อค้นหา', key = "sentence_query", placeholder = "การจัดชั้นและการกันเงินสำรอง")
