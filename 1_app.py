@@ -298,7 +298,8 @@ if 'dev_flag' not in get_params and len(get_params) == 0:
         
         # try:
         # ori_res_df = app.step1_user_search()
-        post_query = get_ria_query(sentence_query)
+        with st.spinner("Searching..."):
+            post_query = get_ria_query(sentence_query)
         if post_query.json()['Result_search'] != 'Not Found':
             
             ori_res_df = pd.DataFrame(post_query.json()['Result_search']) #dataframe
