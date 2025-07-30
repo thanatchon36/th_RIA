@@ -212,6 +212,10 @@ def get_ria_query(sentence_query):
     url_query = 'http://127.0.0.1:6102/ria_query'
     post_query_para = {'user_query':sentence_query,'filter1_selected':[],'filter2_selected':[],'filter3_selected':[]}
     post_query = requests.post(url_query,json= post_query_para)
+    post_params = { 'app_name': 'th_ria',
+                    'username': 'unknown',
+                }
+    res = requests.post(f'https://pc140034433.bot.or.th/log_query', json = post_params, verify = False)
     return post_query
 
 def get_ria_query_dev(sentence_query):
